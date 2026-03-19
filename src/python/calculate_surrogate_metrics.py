@@ -1,4 +1,4 @@
-from pytorch_fid import fid_score  # 重新引入 FID
+from pytorch_fid import fid_score
 from utils_all.differential_color_function import *
 from utils_all.pytorch_ssim import *
 from utils_all.utils import get_linux_style_dataset_list
@@ -20,59 +20,59 @@ def calculate_image_metrics(pred, target):
         psnr = 10 * math.log10(1 / mse) if mse > 0 else 100
         ssim = ssim_fun(pred, target).item()
 
-        # 色差计算
+        # Delta E calculation
         xl_batch = rgb2lab_diff(pred, device)
         yl_batch = rgb2lab_diff(target, device)
         diff_map = ciede2000_diff(xl_batch, yl_batch, device).mean().item()
 
-        # Lpips感官质量
+        # LPIPS perceptual quality
         lpips_val = loss_fn_lpips(pred, target).mean().item()
 
         return mae, rmse, psnr, ssim, diff_map, lpips_val
 
 
 def compare_image_folders_offline(folder_pred, folder_gt, dataname, model_name):
-    print(f">>> 正在计算 FID...")
+    print(f">>> Calculating FID...")
     try:
-        # FID 计算：对比预测文件夹和 GT 文件夹
-        # batch_size 和 dims 可以根据显存调整，2048 是标准维度
+        # FID calculation: compare the prediction folder and the GT folder
+        # batch_size and dims can be adjusted according to GPU memory; 2048 is the standard dimension
         fid_val = fid_score.calculate_fid_given_paths(
             [folder_gt, folder_pred],
             batch_size=32,
             device=device,
             dims=2048,
-            num_workers=0  # Windows下设为0更稳定
+            num_workers=0  # Set to 0 on Windows for better stability
         )
     except Exception as e:
-        print(f"!!! FID 计算失败: {e}")
+        print(f"!!! FID calculation failed: {e}")
         fid_val = float('nan')
 
-    # 获取图像文件列表 (排除 .pt 和 tensors 文件夹)
+    # Get image file lists (excluding .pt and tensors folders)
     files_p = sorted([f for f in os.listdir(folder_pred) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
     files_g = sorted([f for f in os.listdir(folder_gt) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
 
-    # 确保数量对齐
+    # Ensure the counts are aligned
     if len(files_p) != len(files_g):
         min_len = min(len(files_p), len(files_g))
         files_p, files_g = files_p[:min_len], files_g[:min_len]
-        print(f"⚠️ 警告: 数量不匹配，已截断为前 {min_len} 张进行对比")
+        print(f"⚠️ Warning: file counts do not match; truncated to the first {min_len} images for comparison")
 
     total_metrics = {'mae': 0, 'rmse': 0, 'psnr': 0, 'ssim': 0, 'deltaE': 0, 'lpips': 0}
-    # 这里的 batch_size 决定了 PSNR/SSIM 是一次算几张图的平均
+    # This batch size determines how many images are averaged together per PSNR/SSIM computation step
     calc_batch_size = 5
     batch_count = 0
 
-    for i in tqdm(range(0, len(files_p), calc_batch_size), desc=f"计算指标 {dataname}"):
+    for i in tqdm(range(0, len(files_p), calc_batch_size), desc=f"Computing metrics for {dataname}"):
         b_p_names = files_p[i: i + calc_batch_size]
         b_g_names = files_g[i: i + calc_batch_size]
 
         batch_pred, batch_gt = [], []
         for p_name, g_name in zip(b_p_names, b_g_names):
-            # 读取预测图 (PNG)
+            # Read the prediction image (PNG)
             img_p = cv2.cvtColor(cv2.imread(os.path.join(folder_pred, p_name)), cv2.COLOR_BGR2RGB)
             p_tensor = torch.from_numpy(img_p.astype(np.float32) / 255.0).permute(2, 0, 1).unsqueeze(0)
 
-            # 读取 GT 图
+            # Read the GT image
             img_g = cv2.cvtColor(cv2.imread(os.path.join(folder_gt, g_name)), cv2.COLOR_BGR2RGB)
             g_tensor = torch.from_numpy(img_g.astype(np.float32) / 255.0).permute(2, 0, 1).unsqueeze(0)
 
@@ -109,12 +109,12 @@ if __name__ == '__main__':
     excel_file_path = os.path.join(dataset_root, 'final_offline_results_with_fid.xlsx')
     data_list = get_linux_style_dataset_list(dataset_root)
 
-    # 指定模型名称，None 则跑全部
+    # Specify the model name; use None to run all models
     # target_model_name = "FF_PANet"
     target_model_name = None
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # 初始化度量工具
+    # Initialize metric tools
     l1_fun = nn.L1Loss().to(device)
     l2_fun = nn.MSELoss().to(device)
     ssim_fun = SSIM().to(device)
@@ -122,8 +122,9 @@ if __name__ == '__main__':
 
     all_results = []
     for dataname in data_list:
-        # 注意：此处确保 GT 文件夹路径正确，通常 GT 在各自数据集文件夹下或统一位置
-        # 根据你之前的逻辑，这里是统一的 gt 路径
+        # Make sure the GT folder path is correct here. Usually the GT data is stored
+        # either under each dataset folder or in a shared location.
+        # According to the current logic, the GT path is shared here.
         gt_folder = os.path.join(dataset_root, 'test')
         test_models_root = os.path.join(dataset_root, dataname, 'prj', 'test')
 
@@ -139,42 +140,42 @@ if __name__ == '__main__':
         for m_name in model_folders:
             m_path = os.path.join(test_models_root, m_name)
             if not os.path.exists(m_path):
-                print(f">>> [跳过] 未找到路径: {m_path}")
+                print(f">>> [Skip] Path not found: {m_path}")
                 continue
 
-            print(f"\n>>> 正在全面评估指标: {m_name} @ {dataname}")
+            print(f"\n>>> Running full metric evaluation: {m_name} @ {dataname}")
             res = compare_image_folders_offline(m_path, gt_folder, dataname, m_name)
             all_results.append(res)
 
-            # 清理显存防止 FID 累积溢出
+            # Clear GPU memory to avoid FID-related accumulation
             torch.cuda.empty_cache()
 
     if all_results:
-        # 1. 构建 DataFrame
+        # 1. Build the DataFrame
         df_full = pd.DataFrame(all_results)
 
-        # 2. 计算平均统计表
+        # 2. Compute the summary table
         summary_cols = ['Model', 'PSNR', 'RMSE', 'SSIM', 'DeltaE', 'LPIPS', 'FID']
         df_summary = df_full.groupby('Model').mean(numeric_only=True).reset_index()
 
-        # 3. 列名处理：将 DeltaE 替换为罗马符号 ΔE
+        # 3. Rename DeltaE to the symbol ΔE
         df_summary = df_summary.rename(columns={'DeltaE': 'ΔE'})
 
-        # 确保列顺序正确 (使用新列名)
+        # Ensure the column order is correct (using the new column name)
         final_cols = ['Model', 'PSNR', 'RMSE', 'SSIM', 'ΔE', 'LPIPS', 'FID']
         existing_cols = [c for c in final_cols if c in df_summary.columns]
         df_summary = df_summary[existing_cols]
 
-        # 4. 使用 ExcelWriter 写入单一 Sheet
+        # 4. Write a single sheet with ExcelWriter
         with pd.ExcelWriter(excel_file_path, engine='xlsxwriter') as writer:
-            # 只写入一个名为 'Model_Average_Summary' 的表
+            # Write only one sheet named 'Summary'
             df_summary.to_excel(writer, sheet_name='Summary', index=False)
 
-            # --- 格式化设置 ---
+            # --- Formatting setup ---
             workbook = writer.book
             worksheet = writer.sheets['Summary']
 
-            # 定义表头格式 (加粗、背景色、居中)
+            # Define the header format (bold, background color, centered)
             header_format = workbook.add_format({
                 'bold': True,
                 'bg_color': '#D7E4BC',
@@ -183,24 +184,24 @@ if __name__ == '__main__':
                 'valign': 'vcenter'
             })
 
-            # 定义数值列格式：强制 4 位小数
+            # Define the numeric column format: force 4 decimal places
             decimal_format = workbook.add_format({
                 'num_format': '0.0000',
                 'align': 'center',
                 'valign': 'vcenter'
             })
 
-            # 遍历列应用格式
+            # Apply formatting column by column
             for i, col in enumerate(df_summary.columns):
-                # 重新写入表头以应用样式
+                # Rewrite the header to apply the style
                 worksheet.write(0, i, col, header_format)
 
                 if col == 'Model':
-                    # 模型名称列加宽
+                    # Widen the model name column
                     worksheet.set_column(i, i, 25, workbook.add_format({'align': 'center'}))
                 else:
-                    # 指标数值列应用 4 位小数格式
+                    # Apply the 4-decimal format to metric columns
                     worksheet.set_column(i, i, 12, decimal_format)
 
-        print(f"\n✅ 评估完成！汇总报告已生成：{excel_file_path}")
-        print(f"统计说明：仅包含模型平均值，DeltaE 已重命名为 ΔE，数值强制补齐 4 位小数。")
+        print(f"\n✅ Evaluation completed! Summary report generated at: {excel_file_path}")
+        print(f"Summary note: only model averages are included, DeltaE has been renamed to ΔE, and values are padded to 4 decimal places.")
