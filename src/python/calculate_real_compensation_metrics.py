@@ -321,7 +321,6 @@ if __name__ == '__main__':
     ssim_fun = pytorch_ssim_fun().to(device)
 
     # 2. Read the root directory from an environment variable
-    # data_root = os.getenv("DATASET_ROOT", r"E:\Desktop\SIComp_Benchmark\Real_datasets")
     data_root = os.getenv("DATASET_ROOT", r"E:\Desktop\SIComp_Benchmark\New_Real_datasets")
     # 3. Collect all valid dataset names under data_root
     data_list = get_linux_style_dataset_list(data_root)

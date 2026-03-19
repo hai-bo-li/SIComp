@@ -12,10 +12,6 @@ from pathlib import Path
 from tqdm import tqdm
 
 
-
-# ==========================================
-# 1. 核心计算函数
-# ==========================================
 def calculate_image_metrics(pred, target):
     with torch.no_grad():
         mae = l1_fun(pred, target).item()
@@ -34,9 +30,7 @@ def calculate_image_metrics(pred, target):
 
         return mae, rmse, psnr, ssim, diff_map, lpips_val
 
-# ==========================================
-# 2. 文件夹对比逻辑 (PNG + FID 版)
-# ==========================================
+
 def compare_image_folders_offline(folder_pred, folder_gt, dataname, model_name):
     print(f">>> 正在计算 FID...")
     try:
@@ -109,11 +103,8 @@ def compare_image_folders_offline(folder_pred, folder_gt, dataname, model_name):
         'RMSE': total_metrics['rmse'] / batch_count
     }
 
-# ==========================================
-# 3. 主程序
-# ==========================================
+
 if __name__ == '__main__':
-    # --- 关键修改：从环境变量读取路径，读取不到则用默认值 ---
     dataset_root = Path(os.getenv("DATASET_ROOT", r'E:\Desktop\Surrogate_datasets'))
     excel_file_path = os.path.join(dataset_root, 'final_offline_results_with_fid.xlsx')
     data_list = get_linux_style_dataset_list(dataset_root)
@@ -158,74 +149,6 @@ if __name__ == '__main__':
             # 清理显存防止 FID 累积溢出
             torch.cuda.empty_cache()
 
-    # if all_results:
-    #     # 1. 构建原始明细表 (Sheet1)
-    #     df_details = pd.DataFrame(all_results)
-    #     detail_cols = ['Model', 'Dataset', 'PSNR', 'RMSE', 'SSIM', 'DeltaE', 'LPIPS', 'FID', 'MAE']
-    #     df_details = df_details[detail_cols].sort_values(by=['Model', 'Dataset'])
-    #
-    #     # 2. 构建平均统计表 (Sheet2)
-    #     summary_cols = ['Model', 'PSNR', 'RMSE', 'SSIM', 'DeltaE', 'LPIPS', 'FID']
-    #     df_summary = df_details.groupby('Model').mean(numeric_only=True).reset_index()
-    #     df_summary = df_summary[summary_cols]
-    #
-    #     # 注意：这里虽然做了 round(4)，但 Excel 依然会隐藏末尾 0
-    #     df_details = df_details.round(4)
-    #     df_summary = df_summary.round(4)
-    #
-    #     # 3. 使用 ExcelWriter 写入
-    #     with pd.ExcelWriter(excel_file_path, engine='xlsxwriter') as writer:
-    #         df_details.to_excel(writer, sheet_name='Detailed_Results', index=False)
-    #         df_summary.to_excel(writer, sheet_name='Model_Average_Summary', index=False)
-    #
-    #         # --- 获取 workbook 对象进行格式定义 ---
-    #         workbook = writer.book
-    #
-    #         # 定义表头格式
-    #         header_format = workbook.add_format({
-    #             'bold': True,
-    #             'bg_color': '#D7E4BC',
-    #             'border': 1,
-    #             'align': 'center',
-    #             'valign': 'vcenter'
-    #         })
-    #
-    #         # 定义数值列格式：关键就在 'num_format': '0.0000'
-    #         decimal_format = workbook.add_format({
-    #             'num_format': '0.0000',
-    #             'align': 'center',
-    #             'valign': 'vcenter'
-    #         })
-    #
-    #         # 定义文本列格式
-    #         text_format = workbook.add_format({
-    #             'align': 'center',
-    #             'valign': 'vcenter'
-    #         })
-    #
-    #         # 循环设置两个 Sheet 的显示效果
-    #         for sheet_name in ['Detailed_Results', 'Model_Average_Summary']:
-    #             worksheet = writer.sheets[sheet_name]
-    #             # 获取当前 Sheet 对应的 DataFrame
-    #             current_df = df_details if sheet_name == 'Detailed_Results' else df_summary
-    #
-    #             # 遍历所有列进行美化
-    #             for i, col in enumerate(current_df.columns):
-    #                 # 重新写入表头以覆盖默认格式
-    #                 worksheet.write(0, i, col, header_format)
-    #
-    #                 if col in ['Model', 'Dataset']:
-    #                     # 设置文本列：宽度25，应用居中格式
-    #                     worksheet.set_column(i, i, 25, text_format)
-    #                 else:
-    #                     # 设置数值列：宽度12，应用强制4位小数格式
-    #                     worksheet.set_column(i, i, 12, decimal_format)
-    #
-    #     print(f"\n✅ 评估完成！汇总报告已生成：{excel_file_path}")
-    #     print(f"指标说明：数值已强制显示4位小数（如 30.5000）。")
-    # ==========================================
-    # 4. 最终保存逻辑 (仅保留平均汇总表)
-    # ==========================================
     if all_results:
         # 1. 构建 DataFrame
         df_full = pd.DataFrame(all_results)
