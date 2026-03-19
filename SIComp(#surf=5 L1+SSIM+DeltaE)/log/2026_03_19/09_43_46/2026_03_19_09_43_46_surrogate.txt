@@ -1,0 +1,3 @@
+data_name                     model_name                    loss_function       num_train      batch_size     valid_psnr     valid_rmse     valid_ssim     valid_diff     valid_lpips    
+setups/paint_2                SIComp(#surf=5 L1+SSIM+DeltaE)l1+ssim+diff        500            1              22.4486        0.0792         0.7112         7.0984         0.3125         
+ALL                           SIComp(#surf=5 L1+SSIM+DeltaE)l1+ssim+diff        500            1              22.4486        0.0792         0.7112         7.0984         0.3125         
