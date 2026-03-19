@@ -1,3 +1,0 @@
-data_name                     model_name                    loss_function       num_train      batch_size     valid_psnr     valid_rmse     valid_ssim     valid_diff     valid_lpips    
-setups/wood_1                 SIComp(#surf=5 L1+SSIM+LPIPS) l1+ssim+lpips       500            1              23.0935        0.0742         0.7152         6.1747         0.2819         
-ALL                           SIComp(#surf=5 L1+SSIM+LPIPS) l1+ssim+lpips       500            1              23.0935        0.0742         0.7152         6.1747         0.2819         

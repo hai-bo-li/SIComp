@@ -1,3 +1,0 @@
-data_name                     model_name                    loss_function       num_train      batch_size     valid_psnr     valid_rmse     valid_ssim     valid_diff     valid_lpips    
-setups/color_2                SIComp(#surf=5 L1+SSIM+DeltaE)l1+ssim+diff        500            1              23.3527        0.0720         0.7225         6.0313         0.2916         
-ALL                           SIComp(#surf=5 L1+SSIM+DeltaE)l1+ssim+diff        500            1              23.3527        0.0720         0.7225         6.0313         0.2916         

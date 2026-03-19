@@ -1,3 +1,0 @@
-data_name                     model_name                    loss_function       num_train      batch_size     valid_psnr     valid_rmse     valid_ssim     valid_diff     valid_lpips    
-setups/paint_1                SIComp(#surf=3)               l1+ssim+diff+lpips  500            1              22.3813        0.0797         0.7154         7.4632         0.3059         
-ALL                           SIComp(#surf=3)               l1+ssim+diff+lpips  500            1              22.3813        0.0797         0.7154         7.4632         0.3059         
