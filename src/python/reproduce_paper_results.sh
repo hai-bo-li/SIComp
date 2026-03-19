@@ -6,7 +6,7 @@ real_root="../../data/SIComp_Benchmark/SetA_Real_Compensation" #Evaluate using d
 data_names=("color_1" "color_2" "love_1" "love_2" "paint_1" "paint_2" "wood_1" "wood_2")
 export DATASET_ROOT="$surrogate_root"
 
-cd /h/home/lihaibo/Tutor_file/SIComp/src/python/ || exit
+cd SIComp/src/python/ || exit
 for data_name in "${data_names[@]}"; do
     echo "Starting compensation generation"
     start_time=$SECONDS

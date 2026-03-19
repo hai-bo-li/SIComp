@@ -152,14 +152,12 @@ The reproduction script uses relative dataset paths:
 ../../data/SIComp_Benchmark/SetA_Real_Compensation
 ```
 
-So it should be run from `src/python`.
-
 ### 2. Shell script path
 
 The current `reproduce_paper_results.sh` contains a machine-specific `cd` command:
 
 ```bash
-cd /h/home/lihaibo/Tutor_file/SIComp/src/python/ || exit
+cd SIComp/src/python || exit
 ```
 
 If you are using another machine, update that line or replace it with a path relative to your local repository.
