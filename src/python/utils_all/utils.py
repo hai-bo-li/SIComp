@@ -1,10 +1,4 @@
 
-# import sys
-# # sys.path.insert(0, r"H:/home/lihaibo/Tutor_file")
-# from pathlib import Path
-# # Add the parent directory (SIComp/src/python) to sys.path
-# sys.path.append(str(Path(__file__).resolve().parents[1]))
-
 import json
 import os
 import sys
@@ -17,7 +11,7 @@ import torch
 import torch.nn as nn
 from matplotlib import pyplot as plt
 from torch.nn import DataParallel
-from . import pytorch_ssim
+from .import pytorch_ssim
 # from pytorch_ssim import *
 from torch.utils.data import DataLoader, ConcatDataset
 from datetime import datetime

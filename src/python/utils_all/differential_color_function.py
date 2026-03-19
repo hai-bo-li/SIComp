@@ -2,7 +2,6 @@
 import numpy as np
 import torch
 
-
 def rgb2xyz(rgb_image, device):
     mt = torch.tensor([[0.4124, 0.3576, 0.1805],
                        [0.2126, 0.7152, 0.0722],
