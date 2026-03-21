@@ -1,5 +1,5 @@
-from utils_all.swin_transformer_v2 import *
-from TransformerLZH.Transformer.SwinTransformer.MySwinBlocks import MySwinFormerBlocks
+from .utils_all.swin_transformer_v2 import *
+from .TransformerLZH.Transformer.SwinTransformer.MySwinBlocks import MySwinFormerBlocks
 
 def predict_flow_highres(FlowFormer, GT, x, target_size=(512, 512), train_size=(256, 256)):
     """
@@ -921,9 +921,4 @@ class FlowCompensationModel(nn.Module):
             s_warped = self.warp(s, flow)
             predict = self.compensation_model(x_warped, s_warped)
             return predict
-
-
-
-
-
 

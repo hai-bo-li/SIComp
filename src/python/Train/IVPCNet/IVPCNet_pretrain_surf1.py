@@ -1,19 +1,22 @@
+import sys
+from pathlib import Path
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[4]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(_PROJECT_ROOT))
+
 import warnings
 import visdom
 from torch.optim import Adam
 from tqdm import tqdm
-from ...All_Model import *
-from ...utils_all import Datasets as New_dataset
-from python.configs.IVPCNet_config.SCNet_pretrain_surf1_config import get_cfg
-from FF_CompenUltra_lab.src.python.differential_color_function import *
+from SIComp.src.python.All_Model import *
+from SIComp.src.python.utils_all import Datasets as New_dataset
+from SIComp.src.python.configs.IVPCNet_config.SCNet_pretrain_surf1_config import get_cfg
+from SIComp.src.python.utils_all.differential_color_function import *
 import lpips
-from ...utils_all.utils import *
+from SIComp.src.python.utils_all.utils import *
 
 def calculate_image_metrics(pred, target):
-
-    # mse loss
-    # Make sure all functions are placed on CUDA when needed
-    # The .item() call also moves CUDA values to the CPU
     # l1
     mae = l1_fun(pred, target).item()
     # l2
@@ -114,13 +117,13 @@ def train_SL(cfg):
     stop_training = False
     SCNet.train()
     train_datasets = [
-        New_dataset.CompenNetMultiDataset(datasets_module.OmniCompNet_train_dataset1_root, datasets_module.OmniCompNet_train_dataset1_lists, 'train', 'warpSL',
+        New_dataset.CompenNetMultiDataset(datasets_module.SIComp_dataset1_root, datasets_module.SIComp_dataset1_lists, 'train', 'warpSL',
                                           surf_idx=cfg.surf_indices, transforms=data_transforms),
         New_dataset.CompenNetMultiDataset(datasets_module.Compensated_dataset_root, datasets_module.Compensated_data_lists, 'train',
                                           'warpSL', surf_idx=cfg.surf_indices, transforms=data_transforms, CMP=True),
         New_dataset.CompenNetMultiDataset(datasets_module.CompenNet_dataset_root, datasets_module.CompenNet_data_lists, 'train', 'warpSL',
                                           surf_idx=cfg.surf_indices, transforms=data_transforms),
-        New_dataset.CompenNetMultiDataset(datasets_module.OmniCompNet_train_dataset2_root, datasets_module.OmniCompNet_train_dataset2_lists, 'train',
+        New_dataset.CompenNetMultiDataset(datasets_module.SIComp_dataset2_root, datasets_module.SIComp_dataset2_lists, 'train',
                                           'warpSL', surf_idx=cfg.surf_indices, transforms=data_transforms),
         New_dataset.CompenNetMultiDataset(datasets_module.CompenNet_plus_plus_root, datasets_module.CompenNet_plus_plus_lists,
                                           'train',
@@ -130,12 +133,9 @@ def train_SL(cfg):
                                           'warpSL',
                                           surf_idx=cfg.surf_indices, transforms=data_transforms),
     ]
-    # This dataset is used for validation. It differs from the training datasets,
-    # and the projected images and backgrounds are completely different.
-    # Only the test split is used for validation.
-    test_dataset = New_dataset.CompenNetMultiDataset(datasets_module.test_root, datasets_module.test_lists, 'valid', 'warpSL',
+    valid_dataset = New_dataset.CompenNetMultiDataset(datasets_module.Validate_root, datasets_module.Validate_lists, 'valid', 'warpSL',
                                                      surf_idx=cfg.surf_indices, transforms=data_transforms)
-    train_loader, test_loader = create_dataloader(train_datasets=train_datasets, test_dataset=test_dataset, cfg=cfg)
+    train_loader, valid_loader = create_dataloader(train_datasets=train_datasets, test_dataset=valid_dataset, cfg=cfg)
     SCNet_Opt = Adam(SCNet.parameters(), lr=cfg.trainer.cmp_learning_rate, weight_decay=cfg.trainer.cmp_weight_decay)
     scheduler_SCNet = get_scheduler(SCNet_Opt, cfg.trainer.comp_scheduler)
     total_steps = 0
@@ -172,7 +172,7 @@ def train_SL(cfg):
                                     save_path=save_vis_train_image_path)
 
             if total_steps % cfg.test.test_vis_num == 0:
-                test_mae, test_rmse, test_psnr, test_ssim, test_diff_map, test_lpips = evaluate_SL(SCNet, test_loader,
+                test_mae, test_rmse, test_psnr, test_ssim, test_diff_map, test_lpips = evaluate_SL(SCNet, valid_loader,
                                                                                                    steps=total_steps)
 
                 save_test_log_one_line(
@@ -216,7 +216,7 @@ if '__main__' == __name__:
     name = 'SCNet_pretrain_surf1'
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    choice = "sl_lab3"
+    choice = "sl_local"
     # choice = input("Please input: lab2  lab3  sl_lab2  sl_lab3  sl_local  local: ").strip()
     datasets_module = import_datasets_module(choice)
     vis = visdom.Visdom(port=cfg.vis_port)

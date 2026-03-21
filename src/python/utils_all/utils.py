@@ -1132,15 +1132,6 @@ def save_one_model_checkpoint(model, total_steps, save_interval, save_dir, curre
 
 
 def import_datasets_module(choice):
-    """
-    根据用户的选择导入相应的 datasets_lists 模块。
-
-    Args:
-        choice (str): 用户的选择，应该是 'lab2' 或 'lab3'。
-
-    Returns:
-        module: 导入的模块。
-    """
     if choice.lower() == 'lab2':
         try:
             import configs.lab2_datasets_lists as datasets_module
@@ -1150,17 +1141,17 @@ def import_datasets_module(choice):
             print(f"导入模块 configs.lab2_datasets_lists 失败: {e}")
             sys.exit(1)
 
-    elif choice.lower() == 'lab3':
+    elif choice.lower() == 'sicomp':
         try:
-            import configs.lab3_datasets_lists as datasets_module
-            print("已成功导入模块 configs.lab3_datasets_lists")
+            import python.configs.SIComp_datasets_lists as datasets_module
+            print("已成功导入模块 SIComp_datasets_lists")
             return datasets_module
         except ImportError as e:
             print(f"导入模块 configs.lab3_datasets_lists 失败: {e}")
             sys.exit(1)
     elif choice.lower() == 'local':
         try:
-            import configs.local_datasets_lists_1218 as datasets_module
+            import python.configs.IVPCNet_datasets_lists as datasets_module
             print("已成功导入模块 configs.local_datasets_lists")
             return datasets_module
         except ImportError as e:
@@ -1186,7 +1177,7 @@ def import_datasets_module(choice):
 
     elif choice.lower() == 'sl_local':
         try:
-            import configs.SL_local_datasets_lists as datasets_module
+            import python.configs.IVPCNet_datasets_lists as datasets_module
             print("已成功导入模块 configs.SL_local_datasets_lists")
             return datasets_module
         except ImportError as e:

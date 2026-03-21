@@ -7,6 +7,7 @@ def get_linux_style_dataset_list(
     exclude_prefixes: Optional[List[str]] = None,
     include_prefixes: Optional[List[str]] = None
 ) -> List[str]:
+
     """
     Return all matching paths under the `setups` subdirectory in Linux-style format
     using '/' as the path separator.
@@ -16,10 +17,10 @@ def get_linux_style_dataset_list(
         exclude_prefixes (List[str], optional): Exclude directory names with these prefixes.
         include_prefixes (List[str], optional): Only include directory names with these prefixes
             (higher priority than `exclude_prefixes`).
-
     Returns:
         List[str]: A list of paths like ['setups/Block1', 'setups/Fruits_Vegetables2', ...].
     """
+
     exclude_prefixes = exclude_prefixes or []
     setups_dir = Path(dataset_root) / 'setups'
 
@@ -37,7 +38,6 @@ def get_linux_style_dataset_list(
         filtered_dirs = [
             name for name in all_dirs if not any(name.startswith(p) for p in exclude_prefixes)
         ]
-
     data_list = [os.path.join("setups", name).replace("\\", "/") for name in filtered_dirs]
 
     # Print output
@@ -47,8 +47,11 @@ def get_linux_style_dataset_list(
     print(f"\nTotal: {len(data_list)} setup directories")
 
     return data_list
-# Mixed datasets used to train FF_CompUltra under different poses
-OmniCompNet_train_dataset1_lists = [
+
+
+# SIComp_dataset1_root = r'../../../data/SIComp_train_dataset1'
+SIComp_dataset1_root = r'H:/mnt/data/lihaibo/data/SIComp_train_dataset1'
+SIComp_dataset1_lists = [
     r"setups/Cherry/pos1",
     r"setups/Cherry/pos2",
     r"setups/Cherry/pos3",
@@ -113,8 +116,9 @@ OmniCompNet_train_dataset1_lists = [
     r"setups/Wool/pos4",
 ]
 
-OmniCompNet_train_dataset2_root = r'/mnt/data/huang-SIComp/lihaibo/data/OmniCompNet_train_dataset2'
-OmniCompNet_train_dataset2_lists = [
+# SIComp_dataset2_root = r'../../../data/SIComp_train_dataset2'
+SIComp_dataset2_root = r'H:/mnt/data/lihaibo/data/SIComp_train_dataset2'
+SIComp_dataset2_lists = [
     r"setups/Blue_iron_gate/pos1",
     r"setups/Blue_iron_gate/pos2",
     r"setups/Blue_iron_gate/pos3",
@@ -157,7 +161,8 @@ OmniCompNet_train_dataset2_lists = [
     r"setups/wood/pos9",
 ]
 
-CompenNet_plus_plus_root = r'/mnt/data/huang-SIComp/lihaibo/data/compenNet_plus_plus/data'
+# CompenNet_plus_plus_root = r'../../../data/compenNet_plus_plus/data'
+CompenNet_plus_plus_root =  r'H:/mnt/data/lihaibo/data/CompenNet_plus_plus/data'
 CompenNet_plus_plus_lists = [
     r'light1/pos1/lavender_np',
     r'light1/pos2/cubes_np',
@@ -170,11 +175,11 @@ CompenNet_plus_plus_lists = [
     r'light3/pos2/water_np',
 ]
 
-CompenHR_root = r'/mnt/data/huang-SIComp/lihaibo/data/CompenHR'
+# CompenHR_root = r'../../../data/CompenHR'
+CompenHR_root = r'H:/mnt/data/lihaibo/data/CompenHR'
 CompenHR_lists = [
     r"setups/bubble/1",
     r"setups/bubble/2",
-    # r"setups/bubble/3",
     r"setups/cloud/1",
     r"setups/cloud/2",
     r"setups/cloud/3",
@@ -196,5 +201,6 @@ CompenHR_lists = [
     r"setups/water/2",
 ]
 
-test_root = r"/mnt/data/huang-SIComp/lihaibo/data/train_3_datasets"
-test_lists = get_linux_style_dataset_list(dataset_root=test_root)
+# Validate_root = r"../../../data/Validate_dataset"
+Validate_root = r'H:/mnt/data/lihaibo/data/Validate_dataset'
+Validate_lists = get_linux_style_dataset_list(dataset_root=Validate_root)

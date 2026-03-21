@@ -1,21 +1,26 @@
+import sys
+from pathlib import Path
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[4]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(_PROJECT_ROOT))
+
 import warnings
 import visdom
 from torch.optim import Adam
 from tqdm import tqdm
-from ...utils_all.pytorch_ssim import *
-from ...utils_all.Datasets import FlowFormerDataset
-from ...core.FlowFormer import build_flowformer
-from python.configs.SIComp.SIComp_surf3_config import get_cfg
-from python.utils_all.differential_color_function import *
+from SIComp.src.python.utils_all.pytorch_ssim import *
+from SIComp.src.python.utils_all.Datasets import FlowFormerDataset
+from SIComp.src.python.core.FlowFormer import build_flowformer
+from SIComp.src.python.configs.SIComp.SIComp_surf3_config import get_cfg
+from SIComp.src.python.utils_all.differential_color_function import *
 import lpips
-from ...All_Model import *
-from ...utils_all.utils import *
-
+from SIComp.src.python.All_Model import *
+from SIComp.src.python.utils_all.utils import *
 def calculate_image_metrics(pred, target):
-
     # l1
     mae = l1_fun(pred, target).item()
-    # l2
+    #l2
     mse = l2_fun(pred, target).item()
     # RMSE calculation
     rmse = math.sqrt(mse * 3)  # Multiply by 3 because the average is computed over 3 channels
@@ -63,8 +68,6 @@ def computeLoss(prj_pred, prj_train, loss_option):
         lpips_loss = loss_fn_lpips(prj_pred, prj_train)
         train_loss += lpips_loss.mean()  # Take the mean to obtain a scalar loss
     return train_loss
-
-
 
 
 def flow_test_loadData(dataset_root, setup_name, data_type='crop'):
@@ -123,7 +126,7 @@ def evaluate(model, data_loader, steps, save_folder):
 
 def train(cfg):
     stop_training = False
-    OmniCompNet_full.train()
+    SIComp_surf3.train()
     # Load the training datasets
     train_datasets = [
         FlowFormerDataset(datasets_module.OmniCompNet_train_dataset1_root, datasets_module.OmniCompNet_train_dataset1_lists, phase='train', num_train=500,
@@ -145,9 +148,9 @@ def train(cfg):
                                      transforms=data_transforms,
                                      surf_index=cfg.surf_indices)
     train_loader, test_loader = create_dataloader(train_datasets=train_datasets,test_dataset=test_dataset, cfg=cfg)
-    FlowFormer_Opt = Adam(OmniCompNet_full.FlowFormer.parameters(), lr=cfg.trainer.flow_learning_rate,
+    FlowFormer_Opt = Adam(SIComp_surf3.FlowFormer.parameters(), lr=cfg.trainer.flow_learning_rate,
                           weight_decay=cfg.trainer.flow_weight_decay)
-    SCNet_Opt = Adam(OmniCompNet_full.CompenNeSt.parameters(), lr=cfg.trainer.cmp_learning_rate, weight_decay=cfg.trainer.cmp_weight_decay)
+    SCNet_Opt = Adam(SIComp_surf3.CompenNeSt.parameters(), lr=cfg.trainer.cmp_learning_rate, weight_decay=cfg.trainer.cmp_weight_decay)
     # Set learning rate schedulers
     scheduler_flowformer = get_scheduler(FlowFormer_Opt, cfg.trainer.flow_scheduler)
     scheduler_SCNet = get_scheduler(SCNet_Opt, cfg.trainer.comp_scheduler)
@@ -173,7 +176,7 @@ def train(cfg):
             FlowFormer_Opt.zero_grad()
             SCNet_Opt.zero_grad()
             cam_crop, prj_GT, surfs_crop = [x.to(device) for x in data_blob]
-            warped_predict = OmniCompNet_full(prj_GT, cam_crop, surfs_crop)
+            warped_predict = SIComp_surf3(prj_GT, cam_crop, surfs_crop)
             # If _CN.l1_pretrain = True, use pure l1 for the first 4000 steps,
             # then switch to 'l1+ssim+diff+lpips'
             if cfg.trainer.l1_pretrain:
@@ -204,7 +207,7 @@ def train(cfg):
                                     save_path=save_vis_train_image_path)
 
             if total_steps % cfg.test.test_vis_num == 0:
-                test_mae, test_rmse, test_psnr, test_ssim, test_diff_map, test_lpips = evaluate(OmniCompNet_full, test_loader,
+                test_mae, test_rmse, test_psnr, test_ssim, test_diff_map, test_lpips = evaluate(SIComp_surf3, test_loader,
                                                                                                 total_steps, save_vis_img_folder)
 
                 save_test_log_one_line(
@@ -225,7 +228,7 @@ def train(cfg):
                 save_vis_line(vis, win_metrics, save_vis_line_path)
             # Save checkpoint helper call
             total_steps += 1
-            save_one_model_checkpoint(OmniCompNet_full, total_steps, cfg.trainer.save_num, save_checkpoint_folder, current_time, is_final=False)
+            save_one_model_checkpoint(SIComp_surf3, total_steps, cfg.trainer.save_num, save_checkpoint_folder, current_time, is_final=False)
             if total_steps >= cfg.trainer.Max_iters:
                 stop_training = True
                 break
@@ -236,7 +239,7 @@ def train(cfg):
         if not isinstance(scheduler_SCNet, LambdaLR):
             scheduler_SCNet.step()
 
-    save_one_model_checkpoint(OmniCompNet_full, total_steps, cfg.trainer.save_num, save_checkpoint_folder, current_time, is_final=True)
+    save_one_model_checkpoint(SIComp_surf3, total_steps, cfg.trainer.save_num, save_checkpoint_folder, current_time, is_final=True)
 
 
 if __name__ == '__main__':
@@ -246,10 +249,10 @@ if __name__ == '__main__':
     torch.use_deterministic_algorithms(True, warn_only=True)
     warnings.filterwarnings("ignore", category=UserWarning)
     current_time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    name = 'OmniCompNet_surf3_Lab'
+    name = 'SIComp_surf3'
     print(f"train_loss: {cfg.train_loss}\nflow_learning_rate: {cfg.trainer.flow_learning_rate}\n")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    choice = "lab3"
+    choice = "sicomp"
     # choice = input("Please input: lab2 lab3 SL_lab2 SL_lab3 sl_local local: ").strip()
     datasets_module = import_datasets_module(choice)
     vis = visdom.Visdom(port=cfg.vis_port)
@@ -269,7 +272,7 @@ if __name__ == '__main__':
     SCNet = SCNet_surf3().to(device)
     model_name = SCNet.__class__.__name__
     load_state_dict_without_module(cfg.SCNet_pretrain, SCNet)
-    OmniCompNet_full = Connection(FlowFormer, SCNet, warp_func=warp_images).to(device)
+    SIComp_surf3 = Connection(FlowFormer, SCNet, warp_func=warp_images).to(device)
     save_vis_line_folder = create_folder_with_time(f"../../{name}/img", current_time)
     save_metrics_folder = create_folder_with_time(f"../../{name}/log", current_time)
     save_vis_img_folder = create_folder_with_time(f"../../{name}/img", current_time)

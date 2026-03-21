@@ -1,15 +1,22 @@
+import sys
+from pathlib import Path
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[4]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(_PROJECT_ROOT))
+
 import warnings
 import visdom
 from torch.optim import Adam
 from tqdm import tqdm
-from ...utils_all.pytorch_ssim import *
-from ...utils_all.Datasets import FlowFormerDataset
-from ...core.FlowFormer import build_flowformer
-from python.configs.SIComp.SIComp_surf1_config import get_cfg
-from python.utils_all.differential_color_function import *
+from SIComp.src.python.utils_all.pytorch_ssim import *
+from SIComp.src.python.utils_all.Datasets import FlowFormerDataset
+from SIComp.src.python.core.FlowFormer import build_flowformer
+from SIComp.src.python.configs.SIComp.SIComp_surf1_config import get_cfg
+from SIComp.src.python.utils_all.differential_color_function import *
 import lpips
-from ...All_Model import *
-from ...utils_all.utils import *
+from SIComp.src.python.All_Model import *
+from SIComp.src.python.utils_all.utils import *
 def calculate_image_metrics(pred, target):
     # l1
     mae = l1_fun(pred, target).item()
@@ -122,25 +129,25 @@ def train(cfg):
     OmniCompNet_surf1.train()
     # Load the training datasets
     train_datasets = [
-        FlowFormerDataset(datasets_module.OmniCompNet_train_dataset1_root, datasets_module.OmniCompNet_train_dataset1_lists, phase='train', num_train=500,
+        FlowFormerDataset(datasets_module.SIComp_dataset1_root, datasets_module.SIComp_dataset1_lists, phase='train', num_train=500,
                           transforms=data_transforms,
                           surf_index=cfg.surf_indices),
         FlowFormerDataset(datasets_module.CompenNet_plus_plus_root, datasets_module.CompenNet_plus_plus_lists, phase='train',
                           num_train=500,
                           transforms=data_transforms, surf_index=cfg.surf_indices),
-        FlowFormerDataset(datasets_module.OmniCompNet_train_dataset2_root, datasets_module.OmniCompNet_train_dataset2_lists, phase='train', num_train=500,
+        FlowFormerDataset(datasets_module.SIComp_dataset2_root, datasets_module.SIComp_dataset2_lists, phase='train', num_train=500,
                           transforms=data_transforms,
                           surf_index=cfg.surf_indices),
         FlowFormerDataset(datasets_module.CompenHR_root, datasets_module.CompenHR_lists, phase='train', num_train=500,
                           transforms=data_transforms,
                           surf_index=cfg.surf_indices)
     ]
-    test_dataset = FlowFormerDataset(datasets_module.test_root, datasets_module.test_lists,
+    validate_dataset = FlowFormerDataset(datasets_module.Validate_root, datasets_module.Validate_lists,
                                      phase='test',
                                      num_train=200,
                                      transforms=data_transforms,
                                      surf_index=cfg.surf_indices)
-    train_loader, test_loader = create_dataloader(train_datasets=train_datasets, test_dataset=test_dataset, cfg=cfg)
+    train_loader, validate_loader = create_dataloader(train_datasets=train_datasets, test_dataset=validate_dataset, cfg=cfg)
     FlowFormer_Opt = Adam(OmniCompNet_surf1.FlowFormer.parameters(), lr=cfg.trainer.flow_learning_rate,
                           weight_decay=cfg.trainer.flow_weight_decay)
     SCNet_surf1_Opt = Adam(OmniCompNet_surf1.CompenNeSt.parameters(), lr=cfg.trainer.cmp_learning_rate, weight_decay=cfg.trainer.cmp_weight_decay)
@@ -198,7 +205,7 @@ def train(cfg):
                                     save_path=save_vis_train_image_path)
 
             if total_steps % cfg.test.test_vis_num == 0:
-                test_mae, test_rmse, test_psnr, test_ssim, test_diff_map, test_lpips = evaluate(OmniCompNet_surf1, test_loader, total_steps, save_vis_img_folder)
+                test_mae, test_rmse, test_psnr, test_ssim, test_diff_map, test_lpips = evaluate(OmniCompNet_surf1, validate_loader, total_steps, save_vis_img_folder)
 
                 save_test_log_one_line(
                     save_metrics_folder, model_name, cfg.batch_size, cfg.trainer.flow_learning_rate, cfg.train_loss,
@@ -232,19 +239,17 @@ def train(cfg):
     save_one_model_checkpoint(OmniCompNet_surf1, total_steps, cfg.trainer.save_num, save_checkpoint_folder, current_time, is_final=True)
 
 
-if '__main__' == __name__:
+if __name__ == '__main__':
     cfg = get_cfg()
     resetRNGseed(cfg.trainer.randseed)
     os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
     torch.use_deterministic_algorithms(True, warn_only=True)
-    # torch.use_deterministic_algorithms(True)
     warnings.filterwarnings("ignore", category=UserWarning)
-    # Configure datasets
     current_time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    name = "OmniCompNet_surf1_lab"
+    name = "SIComp_surf1"
     print(f"train_loss: {cfg.train_loss}\nflow_learning_rate: {cfg.trainer.flow_learning_rate}\n")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    choice = "lab3"
+    choice = "sicomp"
     # choice = input("Please input: lab2 lab3 SL_lab2 SL_lab3 sl_local local: ").strip()
     datasets_module = import_datasets_module(choice)
     vis = visdom.Visdom(port=cfg.vis_port)

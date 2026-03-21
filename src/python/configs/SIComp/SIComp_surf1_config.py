@@ -8,8 +8,8 @@ _CN.num_workers = 4
 _CN.image_size = [256, 256]
 _CN.surf_indices = [125]
 _CN.transformer = 'latentcostformer'
-_CN.restore_ckpt = r'../../checkpoint/FlowFormer/sintel.pth'
-_CN.SCNet = r"../../checkpoint/SCNet/surf1/SCNet_surf1_final.pth"
+_CN.restore_ckpt = r'../../../../checkpoint/FlowFormer/sintel.pth'
+_CN.SCNet = r"../../../../checkpoint/SCNet/surf1/SCNet_surf1_final.pth"
 # _CN.SCNet = r"/home/haibo/FF_CompenUltra_lab/checkpoint/SCNet_reproduce/surf1/SCNet_surf5_final.pth"
 # latentcostformer
 _CN.latentcostformer = CN()
@@ -85,3 +85,4 @@ _CN.trainer.comp_scheduler.gamma = 0.3
 
 def get_cfg():
     return _CN.clone()
+
