@@ -200,6 +200,5 @@ If you find this work useful in your research, please consider citing:
 - **GitHub:** [https://github.com/Hai-Bo-Li/SIComp](https://github.com/hai-bo-li/SIComp)
 - **Paper:** Coming soon
 
----
 
 [//]: # (If you use this repository in your work, please consider starring ⭐ the project on GitHub.)
