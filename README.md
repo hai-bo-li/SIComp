@@ -167,10 +167,6 @@ If you are using another machine, update that line or replace it with a path rel
 This repository currently does not include a top-level pinned dependency file in `SIComp/`.
 Please install the required Python packages according to the imported libraries used by the scripts, such as PyTorch, OpenCV, pandas, LPIPS, and `pytorch-fid`.
 
-### 4. Pre-publication note
-
-The corresponding paper has not been formally published yet, so no citation information is provided in this repository at the moment.
-
 ## Minimal usage example
 
 If the dataset has already been placed correctly, the shortest workflow is:
@@ -182,8 +178,28 @@ bash reproduce_paper_results.sh
 
 ## License
 
-Please add the project license here if you plan to release one.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-If you use this repository in your work, please consider starring the project on GitHub.
+## Citation
+
+If you find this work useful in your research, please consider citing:
+
+```bibtex
+@article{Li2026SIComp,
+  title={Setup-Independent Full Projector Compensation},
+  author={Li, Haibo and Deng, Qingyue and Li, Jijiang and Ling, Haibin and Huang, Bingyao},
+  journal={IEEE Transactions on Visualization and Computer Graphics (TVCG)},
+  year={2026}
+}
+```
+
+**Project Links:**
+- **Project Page:** [https://hai-bo-li.github.io/SIComp/](https://hai-bo-li.github.io/SIComp/)
+- **GitHub:** [https://github.com/Hai-Bo-Li/SIComp](https://github.com/hai-bo-li/SIComp)
+- **Paper:** Coming soon
+
+---
+
+If you use this repository in your work, please consider starring ⭐ the project on GitHub.
