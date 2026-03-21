@@ -202,4 +202,4 @@ If you find this work useful in your research, please consider citing:
 
 ---
 
-If you use this repository in your work, please consider starring ⭐ the project on GitHub.
+[//]: # (If you use this repository in your work, please consider starring ⭐ the project on GitHub.)
