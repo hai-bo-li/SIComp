@@ -634,48 +634,7 @@ if __name__ == '__main__':
     l2_fun = nn.MSELoss().to(device)
     loss_fn_lpips = lpips.LPIPS(net='vgg').to(device)
     ssim_fun = pytorch_ssim.SSIM().to(device)
-    # choice = "test_local"
-    # datasets_module = import_datasets_module(choice)
-    # apply_mask_and_crop_images_actualMetric(datasets_module.valid_data_root, datasets_module.valid_data_lists, target_size=(256, 256), metrics=False, im_mask_bool=False)
 
-    # dataset_root = r'H:\test_projector_camera\video_demo'
-    # data_name = [r'20250530_175624']
-
-    # 处理数据不需要带上setups
-    # Deprocams datasets
-    # dataset_root = r'H:\Valid_datasets\DeProCams_datasets'
-    # data_name = [
-    #             r'books_cmp',
-    #             r"camo_cmp",
-    #             r'books_cmp_mask_human',
-    #              ]
-
-    # DPCS datasets
-    # dataset_root = r'H:\Valid_datasets\DPCS_datasets'
-    # data_name = [
-    #     r'curve_flower',
-    #     r'curve_mao',
-    #     r'curve_star',
-    #     r'curve_wood',
-    # ]
-    # apply_mask_and_crop_images_actualMetric(dataset_root, data_name, target_size=(600, 600), metrics=False, im_mask_bool=False)
-
-    # from pathlib import Path
-    # dataset_root = Path(r'E:/Desktop/DPCS_real')
-    # setups_dir = dataset_root / 'setups'
-    #
-    # exclude_prefixes = ['curve1']
-    #
-    # data_name = [
-    #     os.path.join("setups", name).replace("\\", "/")
-    #     for name in os.listdir(setups_dir)
-    #     if not any(name.startswith(p) for p in exclude_prefixes)
-    # ]
-    # apply_mask_and_crop_images_actualMetric(dataset_root, data_name, target_size=(256, 256), metrics=False, im_mask_bool=False)
-    # print("All data completed !")
-
-    dataset_root = r'H:/test_projector_camera/DPCS_600_100'
-    data_name = [
-        r'color_1',
-    ]
+    dataset_root = r'xxxx'
+    data_name = [r"xxxx"]
     apply_mask_and_crop_images_actualMetric(dataset_root, data_name, target_size=(600, 600), metrics=False, im_mask_bool=True)

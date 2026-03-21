@@ -1,4 +1,3 @@
-
 import json
 import os
 import sys
@@ -113,10 +112,10 @@ def save_flow_to_vismap(flow_tensor, save_path, max_flow=None):
     sat = (np.power(sat_normalized, 0.9) * 150) + 30
     hsv[..., 1] = sat.astype(np.uint8)
 
-    # [V - 亮度] 保持在 250，明亮清晰
+    # [V - Value] keep it at 250 for a bright and clear result
     hsv[..., 2] = 250
 
-    # 5. 转换并保存 (使用 BGR 适配 cv2.imwrite)
+    # 5. Convert and save (use BGR for cv2.imwrite compatibility)
     vis_image = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -128,21 +127,22 @@ def get_linux_style_dataset_list(
     include_prefixes: Optional[List[str]] = None
 ) -> List[str]:
     """
-    返回 setups 子目录中所有满足条件的路径，格式为 Linux 风格（使用 '/' 分隔符）。
+    Return all paths under the `setups` subdirectory that satisfy the given conditions,
+    formatted in Linux style (using '/' as the separator).
 
     Args:
-        dataset_root (str): 根目录路径，如 'H:/Valid_datasets/CompenHR_datasets'
-        exclude_prefixes (List[str], optional): 排除这些前缀的目录名
-        include_prefixes (List[str], optional): 只包含这些前缀的目录名（优先级高于 exclude）
+        dataset_root (str): Root directory path, for example 'H:/Valid_datasets/CompenHR_datasets'
+        exclude_prefixes (List[str], optional): Exclude directory names with these prefixes
+        include_prefixes (List[str], optional): Only include directory names with these prefixes (higher priority than exclude)
 
     Returns:
-        List[str]: 形如 ['setups/Block1', 'setups/Fruits_Vegetables2', ...] 的路径列表
+        List[str]: A list of paths such as ['setups/Block1', 'setups/Fruits_Vegetables2', ...]
     """
     exclude_prefixes = exclude_prefixes or []
     setups_dir = Path(dataset_root) / 'setups'
 
     if not setups_dir.exists():
-        print(f"[Warning] 目录不存在: {setups_dir}")
+        print(f"[Warning] Directory does not exist: {setups_dir}")
         return []
 
     all_dirs = [name for name in os.listdir(setups_dir) if (setups_dir / name).is_dir()]
@@ -158,11 +158,11 @@ def get_linux_style_dataset_list(
 
     data_list = [os.path.join("setups", name).replace("\\", "/") for name in filtered_dirs]
 
-    # ✅ 打印输出
-    print("数据列表如下：")
+    # ✅ Print the output list
+    print("Dataset list:")
     for path in data_list:
         print(f"  {path}")
-    print(f"\n总计：{len(data_list)} 个 setup 目录")
+    print(f"\nTotal: {len(data_list)} setup directories")
 
     return data_list
 
@@ -172,7 +172,7 @@ def visualize_warp(original, warped, mask, warped_clean, tag='debug', save_path=
     for i in range(b):
         orig_img = to_pil_image(original[i].cpu())
         warped_img = to_pil_image(warped[i].cpu())
-        mask_img = to_pil_image(mask[i].expand(3, -1, -1).cpu())  # 单通道变成3通道
+        mask_img = to_pil_image(mask[i].expand(3, -1, -1).cpu())  # Expand a single-channel mask to three channels
         warped_clean_img = to_pil_image(warped_clean[i].cpu())
 
         orig_img.save(os.path.join(save_path, f'{tag}_b{i}_orig.png'))
@@ -189,8 +189,8 @@ def load_model_with_bias_resize(model, checkpoint_path):
             pretrained_bias = state_dict[k]
             current_bias = model.state_dict()[k]
             if pretrained_bias.shape != current_bias.shape:
-                print(f"↔️ 自动插值: {k} from {pretrained_bias.shape} to {current_bias.shape}")
-                # 旧的是 [L, num_heads]
+                print(f"↔️ Auto interpolation: {k} from {pretrained_bias.shape} to {current_bias.shape}")
+                # The old shape is [L, num_heads]
                 num_heads = current_bias.shape[1]
                 old_len = int(pretrained_bias.shape[0] ** 0.5)
                 new_len = int(current_bias.shape[0] ** 0.5)
@@ -205,7 +205,7 @@ def load_model_with_bias_resize(model, checkpoint_path):
 
     model.load_state_dict(state_dict, strict=False)
 
-data_transforms = {'surf': None,  # surf不用转化是因为在dataset里面已经处理成pytorch的训练格式了
+data_transforms = {'surf': None,  # surf does not need conversion because it has already been processed into the PyTorch training format in the dataset
                    'cam': cv_transforms.Compose([cv_transforms.ToTensor()]),
                    'prj': cv_transforms.Compose([cv_transforms.ToTensor()])}
 
@@ -217,15 +217,15 @@ def worker_init_fn(worker_id, cfg):
     torch.manual_seed(worker_seed)
 
 # def create_dataloader(train_datasets, test_dataset, cfg):
-#     # 创建数据生成器
+#     # Create the data generator
 #     data_gen = torch.Generator()
 #     data_gen.manual_seed(cfg.trainer.randseed)
 #
-#     # --- 关键修改：使用 partial 包装函数 ---
-#     # 这会创建一个新函数，自动把 cfg 传给你的 worker_init_fn
+#     # --- Key modification: use partial to wrap the function ---
+#     # This creates a new function that automatically passes cfg to worker_init_fn
 #     wrapped_init_fn = functools.partial(worker_init_fn, cfg=cfg)
 #
-#     # 合并训练数据集
+#     # Merge training datasets
 #     Concat_dataset = ConcatDataset(train_datasets)
 #     Concat_dataloader = DataLoader(
 #         Concat_dataset,
@@ -233,27 +233,27 @@ def worker_init_fn(worker_id, cfg):
 #         shuffle=True,
 #         num_workers=cfg.num_workers,
 #         generator=data_gen,
-#         worker_init_fn=wrapped_init_fn  # 使用包装后的函数
+#         worker_init_fn=wrapped_init_fn  # Use the wrapped function
 #     )
 #
-#     # 创建验证数据集
+#     # Create the validation dataset
 #     test_loader = DataLoader(
 #         test_dataset,
 #         batch_size=cfg.batch_size,
 #         shuffle=True,
 #         num_workers=cfg.num_workers,
 #         generator=data_gen,
-#         worker_init_fn=wrapped_init_fn  # 使用包装后的函数
+#         worker_init_fn=wrapped_init_fn  # Use the wrapped function
 #     )
 #
 #     return Concat_dataloader, test_loader
-#linux上面不用序列化
+# Linux does not require serialization here
 def create_dataloader(train_datasets, test_dataset, cfg):
-    # 创建数据生成器
+    # Create the data generator
     data_gen = torch.Generator()
     data_gen.manual_seed(cfg.trainer.randseed)
 
-    # 合并训练数据集
+    # Merge training datasets
     Concat_dataset = ConcatDataset(train_datasets)
     Concat_dataloader = DataLoader(
         Concat_dataset,
@@ -261,17 +261,17 @@ def create_dataloader(train_datasets, test_dataset, cfg):
         shuffle=True,
         num_workers=cfg.num_workers,
         generator=data_gen,
-        worker_init_fn=lambda worker_id: worker_init_fn(worker_id, cfg)  # 传递 cfg 给 worker_init_fn
+        worker_init_fn=lambda worker_id: worker_init_fn(worker_id, cfg)  # Pass cfg to worker_init_fn
     )
 
-    # 创建验证数据集
+    # Create the validation dataset
     test_loader = DataLoader(
         test_dataset,
         batch_size=cfg.batch_size,
         shuffle=True,
         num_workers=cfg.num_workers,
         generator=data_gen,
-        worker_init_fn=lambda worker_id: worker_init_fn(worker_id, cfg)  # 同样传递 cfg 给 worker_init_fn
+        worker_init_fn=lambda worker_id: worker_init_fn(worker_id, cfg)  # Pass cfg to worker_init_fn as well
     )
 
     return Concat_dataloader, test_loader
@@ -490,19 +490,19 @@ def optionToString(train_option):
 def log_surrogate(log_dir, current_time, data_name, model_name, loss_function, num_train,
                   batch_size, valid_psnr, valid_rmse, valid_ssim, valid_diff, valid_lpips):
     """
-    记录训练结果到日志文件（标题只在文件首次创建时写入）
+    Record training results to a log file (the title is only written when the file is first created)
 
-    参数:
-        log_dir:        日志目录路径
-        current_time:   外部传入的时间字符串
-        ... (其他参数同前)
+    Args:
+        log_dir:        Log directory path
+        current_time:   Externally passed time string
+        ... (other arguments are the same as before)
     """
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
     log_path = os.path.join(log_dir, f"{current_time}_surrogate.txt")
 
-    # 检查文件是否已存在（决定是否需要写标题）
+    # Check if the file already exists (decide whether to write the title)
     write_header = not os.path.exists(log_path)
 
     with open(log_path, 'a') as log_file:
@@ -528,36 +528,36 @@ def save_test_log_one_line(folder_path, model_name, batch_size, lr, loss, uncmp_
                            uncmp_ssim, uncmp_deltaE, uncmp_lpips, psnr, rmse, ssim, deltaE,
                            lpips, txt_file_name="test_log.txt", excel_file_name="test_log.xlsx"):
     """
-    同时以文本文件和Excel文件格式保存训练日志到指定的文件夹路径，每栏一列，并在每次调用时追加新行。
-    学习率 (lr) 保留小数点后7位。
+    Save training logs to specified folder path in both text file and Excel file formats, appending new rows on each call.
+    Learning rate (lr) is retained with 7 decimal places.
 
-    :param folder_path: 日志文件夹路径。
-    :param model_name: 模型名称。
-    :param batch_size: 批大小。
-    :param lr: 学习率 (Learning Rate)。
-    :param loss: 当前的 loss 描述字符串。
-    :param uncmp_psnr: 原始 PSNR 指标。
-    :param uncmp_rmse: 原始 RMSE 指标。
-    :param uncmp_ssim: 原始 SSIM 指标。
-    :param uncmp_deltaE: 原始 DeltaE 指标。
-    :param uncmp_lpips: 原始 LPIPS 指标。
-    :param psnr: 当前 PSNR 值。
-    :param rmse: 当前 RMSE 值。
-    :param ssim: 当前 SSIM 值。
-    :param deltaE: 当前 DeltaE 值。
-    :param lpips: 当前 LPIPS 值。
-    :param txt_file_name: 文本日志文件名（默认为 "test_log.txt"）。
-    :param excel_file_name: Excel日志文件名（默认为 "test_log.xlsx"）。
+    :param folder_path: Log file folder path.
+    :param model_name: Model name.
+    :param batch_size: Batch size.
+    :param lr: Learning rate.
+    :param loss: Current loss description string.
+    :param uncmp_psnr: Original PSNR metric.
+    :param uncmp_rmse: Original RMSE metric.
+    :param uncmp_ssim: Original SSIM metric.
+    :param uncmp_deltaE: Original DeltaE metric.
+    :param uncmp_lpips: Original LPIPS metric.
+    :param psnr: Current PSNR value.
+    :param rmse: Current RMSE value.
+    :param ssim: Current SSIM value.
+    :param deltaE: Current DeltaE value.
+    :param lpips: Current LPIPS value.
+    :param txt_file_name: Text log file name (default is "test_log.txt").
+    :param excel_file_name: Excel log file name (default is "test_log.xlsx").
     """
     try:
-        # 拼接日志文件的完整路径
+        # Full path for the log files
         txt_log_path = os.path.join(folder_path, txt_file_name)
         excel_log_path = os.path.join(folder_path, excel_file_name)
 
-        # 确保文件夹存在（如果不存在，就递归创建）
+        # Ensure the folder exists (create recursively if not)
         os.makedirs(folder_path, exist_ok=True)
 
-        # 定义标题栏（字段名称）和每列的宽度
+        # Define the title and width for each column
         title = [
             "Time", "Model Name", "Batch_Size", "Learning_Rate", "Loss",
             "UnCmp_PSNR", "UnCmp_RMSE", "UnCmp_SSIM",
@@ -566,24 +566,24 @@ def save_test_log_one_line(folder_path, model_name, batch_size, lr, loss, uncmp_
         ]
         widths = [20, 25, 15, 20, 20, 20, 20, 20, 20, 20, 12, 12, 12, 12, 12]
 
-        # ===== 保存到文本文件 =====
-        # 检查文本文件是否存在
+        # ===== Save to text file =====
+        # Check if the text file exists
         if not os.path.exists(txt_log_path):
             with open(txt_log_path, "w", encoding="utf-8") as txt_file:
-                # 将标题格式化为固定的列宽并居中对齐
+                # Format the title to fixed column widths and center align
                 title_line = "".join([col.center(width) for col, width in zip(title, widths)]) + "\n"
                 txt_file.write(title_line)
                 # print(f"Log TXT file created with headers: {txt_log_path}")
 
-        # 获取当前时间字符串
+        # Get the current time string
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # 将日志内容格式化为固定的列宽并居中对齐，学习率保留7位小数
+        # Format the log content to fixed column widths and center align, learning rate with 7 decimal places
         log_message = "".join([
             str(current_time).center(widths[0]),
             str(model_name).center(widths[1]),
             str(batch_size).center(widths[2]),
-            f"{lr:.7f}".center(widths[3]),  # 修改处：保留7位小数
+            f"{lr:.7f}".center(widths[3]),  # Modified: 7 decimal places
             str(loss).center(widths[4]),
             f"{uncmp_psnr:.4f}".center(widths[5]),
             f"{uncmp_rmse:.4f}".center(widths[6]),
@@ -597,33 +597,33 @@ def save_test_log_one_line(folder_path, model_name, batch_size, lr, loss, uncmp_
             f"{lpips:.4f}".center(widths[14]) + "\n"
         ])
 
-        # 追加模式写入日志内容到文本文件
+        # Append the log content to the text file
         with open(txt_log_path, "a", encoding="utf-8") as txt_file:
             txt_file.write(log_message)
 
         # print(f"Log entry appended to TXT file: {txt_log_path}")
 
-        # ===== 保存到Excel文件 =====
-        # 检查Excel文件是否存在
+        # ===== Save to Excel file =====
+        # Check if the Excel file exists
         if not os.path.exists(excel_log_path):
-            # 创建一个新的Workbook
+            # Create a new Workbook
             wb = Workbook()
             ws = wb.active
-            ws.title = "Test_Log"  # 可选：设置工作表名称
-            ws.append(title)  # 写入标题
+            ws.title = "Test_Log"  # Optional: set the sheet name
+            ws.append(title)  # Write the title
             wb.save(excel_log_path)
             # print(f"Log Excel file created with headers: {excel_log_path}")
 
-        # 打开Workbook
+        # Open the Workbook
         wb = load_workbook(excel_log_path)
         ws = wb.active
 
-        # 创建日志数据行，学习率保留7位小数
+        # Create the log data row, learning rate with 7 decimal places
         log_row = [
             current_time,
             model_name,
             batch_size,
-            round(lr, 7),  # 修改处：保留7位小数
+            round(lr, 7),  # Modified: 7 decimal places
             loss,
             round(uncmp_psnr, 4),
             round(uncmp_rmse, 4),
@@ -640,7 +640,7 @@ def save_test_log_one_line(folder_path, model_name, batch_size, lr, loss, uncmp_
         # Append the new row
         ws.append(log_row)
 
-        # 保存Workbook
+        # Save the Workbook
         wb.save(excel_log_path)
 
         # print(f"Log entry appended to Excel file: {excel_log_path}")
@@ -651,64 +651,64 @@ def save_test_log_one_line(folder_path, model_name, batch_size, lr, loss, uncmp_
 
 def save_vis_line(vis, win, save_path):
     """
-    保存 Visdom 图表为图片，并在曲线中只显示最后一个数据点的数值，第0轮的点不连接到原点。
+    Save Visdom chart as an image, displaying only the last data point of the curve, and not connecting the 0th round point to the origin.
 
-    :param vis: Visdom 实例
-    :param win: Visdom 图表窗口名称
-    :param save_path: 保存图片的路径
+    :param vis: Visdom instance
+    :param win: Visdom chart window name
+    :param save_path: Path to save the image
     """
-    # 获取窗口的数据
+    # Get the data from the window
     window_data = vis.get_window_data(win)
-    if not window_data:  # 检查数据是否为空
+    if not window_data:  # Check if the data is empty
         print(f"Warning: No data found in Visdom window '{win}'")
         return
 
     try:
-        # 尝试解析窗口的数据
+        # Try to parse the window data
         window_json = json.loads(window_data)
         content = window_json.get('content', {})
-        traces = content.get('data', [])  # 图表的曲线数据通常在 'data'
+        traces = content.get('data', [])  # The curve data in the chart is usually in 'data'
 
-        # 创建绘图
+        # Create the plot
         plt.figure(figsize=(10, 6))
         for trace in traces:
-            x = trace['x']  # x 轴数据
-            y = trace['y']  # y 轴数据
-            name = trace.get('name', 'unknown')  # 获取曲线名称
+            x = trace['x']  # x-axis data
+            y = trace['y']  # y-axis data
+            name = trace.get('name', 'unknown')  # Get the curve name
 
-            # 如果数据点的数量大于 1，才进行绘图
+            # Plot only if there is more than 1 data point
             if len(x) > 0 and len(y) > 0:
-                plt.plot(x[1:], y[1:], label=name)  # 从第1个点开始绘图
-                # plt.scatter(x[0:1], y[0:1], color='red')  # 单独画第0轮的点
+                plt.plot(x[1:], y[1:], label=name)  # Plot from the 1st point
+                # plt.scatter(x[0:1], y[0:1], color='red')  # Plot the 0th round point separately
 
-                # 显示最后一个点的数值
+                # Display the value of the last point
                 plt.annotate(
-                    f'{y[-1]:.4f}',  # 只显示最后一个点的数值
-                    (x[-1], y[-1]),  # 最后一个点的位置
-                    textcoords="offset points",  # 偏移量模式
-                    xytext=(0, 5),  # 偏移量（x方向和y方向）
-                    ha='center',  # 水平对齐方式
-                    fontsize=8,  # 字体大小
-                    color='black'  # 字体颜色
+                    f'{y[-1]:.4f}',  # Show only the value of the last point
+                    (x[-1], y[-1]),  # Position of the last point
+                    textcoords="offset points",  # Offset mode
+                    xytext=(0, 5),  # Offset (x and y direction)
+                    ha='center',  # Horizontal alignment
+                    fontsize=8,  # Font size
+                    color='black'  # Font color
                 )
-        # 获取标题
+        # Get the title
         title = content.get('layout', {}).get('title', {})
         if isinstance(title, dict) and 'text' in title:
-            plt.title(title['text'])  # 如果是字典格式
+            plt.title(title['text'])  # If in dictionary format
         else:
-            plt.title(title)  # 如果是字符串格式
+            plt.title(title)  # If in string format
 
-        # 获取 x 和 y 轴的标签
+        # Get the x and y axis labels
         xaxis = content.get('layout', {}).get('xaxis', {}).get('title', {})
         plt.xlabel(xaxis['text'] if isinstance(xaxis, dict) and 'text' in xaxis else xaxis)
 
         yaxis = content.get('layout', {}).get('yaxis', {}).get('title', {})
         plt.ylabel(yaxis['text'] if isinstance(yaxis, dict) and 'text' in yaxis else yaxis)
 
-        # 添加图例
+        # Add legend
         plt.legend()
 
-        # 保存图表图片
+        # Save the chart as an image
         plt.savefig(save_path)
         plt.close()
 
@@ -718,44 +718,44 @@ def save_vis_line(vis, win, save_path):
 
 def create_folder_with_time(base_folder, current_time):
     """
-    根据传入的时间字符串，在指定的 base_folder 下创建两个层级的文件夹：
-    - 第一级：日期文件夹 (格式为 'YYYY_MM_DD')
-    - 第二级：时间文件夹 (格式为 'HH_MM_SS')
+    Create two levels of folders under the specified base_folder based on the passed time string:
+    - Level 1: Date folder (format 'YYYY_MM_DD')
+    - Level 2: Time folder (format 'HH_MM_SS')
 
-    :param base_folder: 顶层文件夹名 (例如 'log' 或 'SCNet_surf1_img')
-    :param current_time: 时间字符串，格式为 'YYYY_MM_DD_HH_MM_SS'
-    :return: 返回最终创建的时间文件夹路径
+    :param base_folder: Top-level folder name (e.g., 'log' or 'SCNet_surf1_img')
+    :param current_time: Time string, format 'YYYY_MM_DD_HH_MM_SS'
+    :return: The final created time folder path
     """
     try:
-        # 检查时间字符串格式是否正确
+        # Check the format of the time string
         if "_" not in current_time:
             raise ValueError(f"Invalid time format: {current_time}. Expected format is 'YYYY_MM_DD_HH_MM_SS'.")
 
-        # 拆分时间字符串为日期部分和时间部分
+        # Split the time string into date and time parts
         parts = current_time.split("_")
         if len(parts) != 6:
             raise ValueError(f"Invalid time format: {current_time}. Expected format is 'YYYY_MM_DD_HH_MM_SS'.")
 
-        date_part = "_".join(parts[:3])  # 日期部分 (YYYY_MM_DD)
-        time_part = "_".join(parts[3:])  # 时间部分 (HH_MM_SS)
+        date_part = "_".join(parts[:3])  # Date part (YYYY_MM_DD)
+        time_part = "_".join(parts[3:])  # Time part (HH_MM_SS)
 
-        # 构建日期文件夹路径
+        # Build the date folder path
         date_folder_path = os.path.join(base_folder, date_part)
 
-        # 创建日期文件夹（如果不存在）
+        # Create the date folder if it does not exist
         if not os.path.exists(date_folder_path):
             os.makedirs(date_folder_path)
             print(f"Created date folder: {date_folder_path}")
 
-        # 构建时间文件夹路径
+        # Build the time folder path
         time_folder_path = os.path.join(date_folder_path, time_part)
 
-        # 创建时间文件夹（如果不存在）
+        # Create the time folder if it does not exist
         if not os.path.exists(time_folder_path):
             os.makedirs(time_folder_path)
             print(f"Created time folder: {time_folder_path}")
 
-        # 返回最终创建的时间文件夹路径
+        # Return the final created time folder path
         return time_folder_path
 
     except Exception as e:
@@ -765,41 +765,41 @@ def create_folder_with_time(base_folder, current_time):
 
 def preprocess_4d_tensor(input_tensor, device, repeat_times=None):
     """
-    处理一个 4 维张量，标准化、调整通道顺序并转移到指定设备。
+    Process a 4D tensor: normalize, adjust channel order, and transfer to the specified device.
 
-    参数：
-        input_tensor: 输入的 4 维张量，形状为 (N, H, W, C)。
-        device: 要将数据传输到的设备（例如 'cuda' 或 'cpu'）。
-        repeat_times: 重复次数（可选），如果需要对张量进行维度重复。
+    Args:
+        input_tensor: The input 4D tensor with shape (N, H, W, C).
+        device: The device to transfer the data to (e.g., 'cuda' or 'cpu').
+        repeat_times: Repeat times (optional), for repeating tensor dimensions.
 
-    返回：
-        在指定设备上的处理后的张量。
+    Returns:
+        The processed tensor on the specified device.
     """
-    # 如果需要重复张量
+    # If repetition is needed
     if repeat_times is not None:
         input_tensor = input_tensor.repeat(repeat_times, 1, 1, 1)
 
-    # 标准化并转换数据类型
+    # Normalize and change data type
     processed_tensor = input_tensor.permute(0, 3, 1, 2).float().div(255)
 
-    # 将数据转移到指定设备
+    # Transfer data to the specified device
     processed_tensor = processed_tensor.to(device)
 
     return processed_tensor
 
 
 def preprocess_cam_surf_5_data(data_loader, device):
-    # 获取一批数据
+    # Get one batch of data
     data = next(iter(data_loader))
 
-    # 转换到目标设备并调整数据类型
+    # Convert to target device and adjust data type
     data = data.to(device=device, dtype=torch.float32)
 
-    # 调整维度并归一化
+    # Adjust dimensions and normalize
     data = data.permute(0, 3, 1, 2)
     data = data / 255.0
 
-    # 使用 reshape 调整数据形状
+    # Use reshape to adjust data shape
     data = data.reshape(1, 15, 256, 256)
 
     return data
@@ -843,7 +843,7 @@ def flow_saveImgs(inputData, dir, start_idx=0):
 
 def warp_images(image, flow, mode='bilinear', padding_mode='zeros'):
     """
-    返回经过mask过滤后的warp图，保证无效区域是0
+    Returns the warped image filtered by the mask, ensuring the invalid areas are 0
     Args:
         image (torch.Tensor): (B, C, H, W)
         flow (torch.Tensor): (B, 2, H, W)
@@ -854,7 +854,7 @@ def warp_images(image, flow, mode='bilinear', padding_mode='zeros'):
     """
     B, C, H, W = image.size()
     device = image.device
-    # 生成标准网格
+    # Generate standard grid
     grid_x, grid_y = torch.meshgrid(
         torch.linspace(-1.0, 1.0, W, device=device),
         torch.linspace(-1.0, 1.0, H, device=device),
@@ -862,7 +862,7 @@ def warp_images(image, flow, mode='bilinear', padding_mode='zeros'):
     )
     grid = torch.stack((grid_x, grid_y), dim=-1)  # (H, W, 2)
     grid = grid.unsqueeze(0).repeat(B, 1, 1, 1)  # (B, H, W, 2)
-    # 归一化 flow
+    # Normalize flow
     flow_norm = torch.zeros_like(flow)
     flow_norm[:, 0, :, :] = flow[:, 0, :, :] / ((W - 1) / 2)
     flow_norm[:, 1, :, :] = flow[:, 1, :, :] / ((H - 1) / 2)
@@ -870,105 +870,37 @@ def warp_images(image, flow, mode='bilinear', padding_mode='zeros'):
     vgrid = grid + flow_norm
     # grid_sample
     warped = F.grid_sample(image, vgrid, mode=mode, padding_mode=padding_mode, align_corners=True)
-    # 同样grid_sample一个全1图像，拿到mask
-    # ones = torch.ones_like(image[:, :1, :, :])  # (B, 1, H, W)
-    # mask = F.grid_sample(ones, vgrid, mode='nearest', padding_mode='zeros')
-    # mask = (mask >= 0.999).float()
-    # 用mask清除无效区域
-    # warped_clean = warped * mask
-    # if return_all:
     return warped
-
-
-#
-# def warp_images(image, flow, mode='bilinear', padding_mode='zeros', return_all=False):
-#     """
-#     使用光流 warp 图像，返回：
-#         - warped: 原始 flow 的 warp 图像
-#         - mask: 有效 flow 区域（不越界）
-#         - warped_clean: 掩掉越界 flow 后 warp 的图像
-#     """
-#     B, C, H, W = image.size()
-#     device = image.device
-#
-#     # 生成标准归一化网格 base_grid，[-1, 1]
-#     grid_x, grid_y = torch.meshgrid(
-#         torch.linspace(-1.0, 1.0, W, device=device),
-#         torch.linspace(-1.0, 1.0, H, device=device),
-#         indexing='xy'
-#     )
-#     base_grid = torch.stack((grid_x, grid_y), dim=-1)  # (H, W, 2)
-#     base_grid = base_grid.unsqueeze(0).repeat(B, 1, 1, 1)  # (B, H, W, 2)
-#
-#     # 归一化 flow → [-1, 1] 坐标系下的 flow
-#     flow_norm = torch.zeros_like(flow)
-#     flow_norm[:, 0] = flow[:, 0] / ((W - 1) / 2)
-#     flow_norm[:, 1] = flow[:, 1] / ((H - 1) / 2)
-#     flow_norm = flow_norm.permute(0, 2, 3, 1)  # (B, H, W, 2)
-#
-#     # 计算目标 grid（未mask）
-#     vgrid = base_grid + flow_norm
-#
-#     # ----- 1. 原始 flow 扭正图像 -----
-#     warped = F.grid_sample(image, vgrid, mode=mode, padding_mode=padding_mode, align_corners=True)
-#
-#     # ----- 2. 根据 vgrid 越界情况生成 mask -----
-#     mask_x = (vgrid[..., 0] >= -1.0) & (vgrid[..., 0] <= 1.0)
-#     mask_y = (vgrid[..., 1] >= -1.0) & (vgrid[..., 1] <= 1.0)
-#     mask = (mask_x & mask_y).float()  # (B, H, W)
-#
-#     # 将 mask 转成 (B, 1, H, W)，以便与 image 通道数一致
-#     mask_unsq = mask.unsqueeze(1)  # (B, 1, H, W)
-#
-#     # ----- 3. 用 mask 过滤 flow（无效位置 flow = 0） -----
-#     masked_flow = flow * mask_unsq
-#
-#     # 归一化 masked flow
-#     flow_masked_norm = torch.zeros_like(masked_flow)
-#     flow_masked_norm[:, 0] = masked_flow[:, 0] / ((W - 1) / 2)
-#     flow_masked_norm[:, 1] = masked_flow[:, 1] / ((H - 1) / 2)
-#     flow_masked_norm = flow_masked_norm.permute(0, 2, 3, 1)
-#
-#     # 计算 masked flow 的目标 grid
-#     vgrid_clean = base_grid + flow_masked_norm
-#
-#     # ----- 4. 用 masked flow warp 图像（真正 clean 的扭正）-----
-#     warped_clean = F.grid_sample(image, vgrid_clean, mode=mode, padding_mode=padding_mode, align_corners=True)
-#
-#     if return_all:
-#         return warped, mask_unsq, warped_clean
-#     else:
-#         return warped_clean
 
 def save_config_and_model_info(config, model, output_dir):
     """
-    保存配置文件和模型的相关信息到指定文件夹中的日志文件。
+    Save the configuration file and model-related information to the log file in the specified folder.
 
     Args:
-        config (CN): 配置对象（如 _CN）。
-        model (object): 已声明的外部模型对象。
-        output_dir (str): 保存日志文件的文件夹路径。
+        config (CN): Configuration object (e.g., _CN).
+        model (object): Declared external model object.
+        output_dir (str): Folder path to save the log file.
     """
-    # 确保输出目录存在，如果不存在则创建
+    # Ensure the output directory exists, create if not
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         print(f"Created directory: {output_dir}")
 
-    # 定义日志文件名
+    # Log file name
     output_file_path = os.path.join(output_dir, "config_and_model_info.txt")
 
-    # 获取模型的类定义源码
+    # Get the class definition source of the model
     cls = model.__class__
     class_source_code = inspect.getsource(cls)
 
-    # 写入配置和模型信息到同一个文件
+    # Write configuration and model information to the same file
     with open(output_file_path, 'w') as output_file:
-        # 写入配置内容
+        # Write configuration content
         output_file.write("### Configuration ###\n")
-        output_file.write(config.dump())  # 将配置的内容以 YAML 格式写入文件
+        output_file.write(config.dump())  # Dump the configuration content in YAML format
         output_file.write("\n\n")
 
-        # 写入模型信息
+        # Write model information
         output_file.write("### Model Information ###\n")
         output_file.write(f"Model Name: {model.__class__.__name__}\n\n")
         output_file.write("### Model Class Definition ###\n")
@@ -979,7 +911,7 @@ def save_config_and_model_info(config, model, output_dir):
 
 def get_scheduler(optimizer, scheduler_config):
     """
-    根据配置返回相应的学习率调度器
+    Return the corresponding learning rate scheduler based on the configuration
     """
     scheduler_type = scheduler_config.type
     if scheduler_type == 'step_lr':
@@ -997,37 +929,36 @@ def get_scheduler(optimizer, scheduler_config):
 def save_two_checkpoint(model_a, model_b, optimizer_a, optimizer_b, scheduler_a, scheduler_b, total_steps, save_interval, save_dir,
                         is_final=False):
     """
-    保存模型的检查点
+    Save model checkpoints
 
-    参数：
-    - model_a: 要保存的模型 A
-    - model_b: 要保存的模型 B
-    - optimizer_a: 模型 A 的优化器
-    - optimizer_b: 模型 B 的优化器
-    - scheduler_a: 模型 A 的学习率调度器
-    - scheduler_b: 模型 B 的学习率调度器
-    - total_steps: 当前的迭代次数
-    - save_interval: 每多少轮保存一次
-    - save_dir: 保存的基础目录
-    - current_time: 当前时间字符串，用于创建独立的文件夹
-    - is_final: 是否为最终保存（布尔值）
+    Args:
+    - model_a: Model A to be saved
+    - model_b: Model B to be saved
+    - optimizer_a: Optimizer for Model A
+    - optimizer_b: Optimizer for Model B
+    - scheduler_a: Learning rate scheduler for Model A
+    - scheduler_b: Learning rate scheduler for Model B
+    - total_steps: Current iteration count
+    - save_interval: Save every how many rounds
+    - save_dir: Base directory for saving
+    - is_final: Whether it is the final save (boolean)
     """
 
-    # 判断是否需要保存检查点
+    # Check if checkpoint needs to be saved
     should_save = (total_steps % save_interval == 0) or is_final
 
     if should_save:
-        # 根据是否为最终保存，决定文件名
+        # Decide file name based on final save or not
         if is_final:
             filename = f'step_{total_steps}_final.pth'
         else:
             filename = f'step_{total_steps}.pth'
 
-        # 定义保存的文件路径
+        # Define the file path for saving
         final_path = os.path.join(save_dir, filename)
 
         try:
-            # 创建一个字典，将两个模型、优化器和调度器的状态保存
+            # Create a dictionary to save the states of two models, optimizers, and schedulers
             checkpoint = {
                 'model_a_state_dict': model_a.module.state_dict() if isinstance(model_a, DataParallel) else model_a.state_dict(),
                 'model_b_state_dict': model_b.module.state_dict() if isinstance(model_b, DataParallel) else model_b.state_dict(),
@@ -1038,257 +969,257 @@ def save_two_checkpoint(model_a, model_b, optimizer_a, optimizer_b, scheduler_a,
                 'total_steps': total_steps,
             }
 
-            # 保存检查点
+            # Save the checkpoint
             torch.save(checkpoint, final_path)
-            print(f"保存检查点到: {final_path}")
+            print(f"Saved checkpoint to: {final_path}")
         except Exception as e:
-            print(f"保存检查点时发生错误: {e}")
+            print(f"Error saving checkpoint: {e}")
 
 
 def load_checkpoint(filename, model_a, model_b, optimizer_a, optimizer_b, scheduler_a, scheduler_b):
     """
-    加载检查点
+    Load checkpoints
 
-    参数：
-    - filename: 保存的检查点文件路径
-    - model_a: 要加载的模型 A
-    - model_b: 要加载的模型 B
-    - optimizer_a: 模型 A 的优化器
-    - optimizer_b: 模型 B 的优化器
-    - scheduler_a: 模型 A 的学习率调度器
-    - scheduler_b: 模型 B 的学习率调度器
+    Args:
+    - filename: Path to the saved checkpoint file
+    - model_a: Model A to load
+    - model_b: Model B to load
+    - optimizer_a: Optimizer for Model A
+    - optimizer_b: Optimizer for Model B
+    - scheduler_a: Learning rate scheduler for Model A
+    - scheduler_b: Learning rate scheduler for Model B
 
-    返回：
-    - total_steps: 加载的总迭代次数
+    Returns:
+    - total_steps: Loaded total iteration count
     """
     try:
-        # 加载检查点
+        # Load the checkpoint
         checkpoint = torch.load(filename)
 
-        # 加载模型状态字典
+        # Load model state dicts
         model_a.load_state_dict(checkpoint['model_a_state_dict'])
         model_b.load_state_dict(checkpoint['model_b_state_dict'])
 
-        # 加载优化器状态字典
+        # Load optimizer state dicts
         optimizer_a.load_state_dict(checkpoint['optimizer_a_state_dict'])
         optimizer_b.load_state_dict(checkpoint['optimizer_b_state_dict'])
 
-        # 加载学习率调度器状态字典
+        # Load scheduler state dicts
         scheduler_a.load_state_dict(checkpoint['scheduler_a_state_dict'])
         scheduler_b.load_state_dict(checkpoint['scheduler_b_state_dict'])
 
-        # 返回加载的总迭代次数
+        # Return the loaded total iteration count
         total_steps = checkpoint['total_steps']
-        print(f"成功加载检查点: {filename} (总迭代次数: {total_steps})")
+        print(f"Successfully loaded checkpoint: {filename} (Total steps: {total_steps})")
         return total_steps
 
     except Exception as e:
-        print(f"加载检查点时发生错误: {e}")
+        print(f"Error loading checkpoint: {e}")
         raise
 
 
 def save_one_model_checkpoint(model, total_steps, save_interval, save_dir, current_time, is_final=False):
     """
-    保存模型的检查点
+    Save model checkpoints
 
-    参数：
-    - model: 要保存的模型
-    - total_steps: 当前的迭代次数
-    - save_interval: 每多少轮保存一次
-    - save_dir: 保存的基础目录
-    - current_time: 当前时间字符串，用于创建独立的文件夹
-    - is_final: 是否为最终保存（布尔值）
+    Args:
+    - model: Model to be saved
+    - total_steps: Current iteration count
+    - save_interval: Save every how many rounds
+    - save_dir: Base directory for saving
+    - current_time: Current time string for creating independent folders
+    - is_final: Whether it is the final save (boolean)
     """
 
-    # 判断是否需要保存检查点
+    # Check if checkpoint needs to be saved
     should_save = (total_steps % save_interval == 0) or is_final
 
     if should_save:
-        # 创建新的保存目录（基于当前时间）
+        # Create new save directory (based on current time)
         checkpoint_dir = os.path.join(save_dir, current_time)
         os.makedirs(checkpoint_dir, exist_ok=True)
 
-        # 根据是否为最终保存，决定文件名
+        # Decide file name based on final save or not
         if is_final:
             filename = f'step_{total_steps}_final.pth'
         else:
             filename = f'step_{total_steps}.pth'
 
-        # 定义保存的文件路径
+        # Define the file path for saving
         final_path = os.path.join(checkpoint_dir, filename)
 
         try:
-            # 如果模型使用了 DataParallel，保存其 module 的 state_dict
+            # If the model uses DataParallel, save the state_dict of the module
             if isinstance(model, DataParallel):
                 state_dict = model.module.state_dict()
             else:
                 state_dict = model.state_dict()
 
-            # 保存模型的状态字典
+            # Save the model's state dict
             torch.save(state_dict, final_path)
-            print(f"保存检查点到: {final_path}")
+            print(f"Saved checkpoint to: {final_path}")
         except Exception as e:
-            print(f"保存检查点时发生错误: {e}")
+            print(f"Error saving checkpoint: {e}")
 
 
 def import_datasets_module(choice):
     if choice.lower() == 'lab2':
         try:
             import configs.lab2_datasets_lists as datasets_module
-            print("已成功导入模块 configs.lab2_datasets_lists")
+            print("Successfully imported module configs.lab2_datasets_lists")
             return datasets_module
         except ImportError as e:
-            print(f"导入模块 configs.lab2_datasets_lists 失败: {e}")
+            print(f"Failed to import module configs.lab2_datasets_lists: {e}")
             sys.exit(1)
 
     elif choice.lower() == 'sicomp':
         try:
             import python.configs.SIComp_datasets_lists as datasets_module
-            print("已成功导入模块 SIComp_datasets_lists")
+            print("Successfully imported module SIComp_datasets_lists")
             return datasets_module
         except ImportError as e:
-            print(f"导入模块 configs.lab3_datasets_lists 失败: {e}")
+            print(f"Failed to import module configs.lab3_datasets_lists: {e}")
             sys.exit(1)
     elif choice.lower() == 'local':
         try:
             import python.configs.IVPCNet_datasets_lists as datasets_module
-            print("已成功导入模块 configs.local_datasets_lists")
+            print("Successfully imported module configs.local_datasets_lists")
             return datasets_module
         except ImportError as e:
-            print(f"导入模块 configs.local_datasets_lists 失败: {e}")
+            print(f"Failed to import module configs.local_datasets_lists: {e}")
             sys.exit(1)
     elif choice.lower() == 'sl_lab3':
         try:
             import configs.SL_lab3_datasets_lists as datasets_module
-            print("已成功导入模块 configs.SL_lab3_datasets_lists")
+            print("Successfully imported module configs.SL_lab3_datasets_lists")
             return datasets_module
         except ImportError as e:
-            print(f"导入模块 configs.SL_lab3_datasets_lists 失败: {e}")
+            print(f"Failed to import module configs.SL_lab3_datasets_lists: {e}")
             sys.exit(1)
 
     elif choice.lower() == 'sl_lab2':
         try:
             import configs.SL_lab2_datasets_lists as datasets_module
-            print("已成功导入模块 configs.SL_lab2_datasets_lists")
+            print("Successfully imported module configs.SL_lab2_datasets_lists")
             return datasets_module
         except ImportError as e:
-            print(f"导入模块 configs.SL_lab2_datasets_lists 失败: {e}")
+            print(f"Failed to import module configs.SL_lab2_datasets_lists: {e}")
             sys.exit(1)
 
     elif choice.lower() == 'sl_local':
         try:
             import python.configs.IVPCNet_datasets_lists as datasets_module
-            print("已成功导入模块 configs.SL_local_datasets_lists")
+            print("Successfully imported module configs.SL_local_datasets_lists")
             return datasets_module
         except ImportError as e:
-            print(f"导入模块 configs.SL_local_datasets_lists 失败: {e}")
+            print(f"Failed to import module configs.SL_local_datasets_lists: {e}")
             sys.exit(1)
 
     elif choice.lower() == 'sl_without_cmp_lab3':
         try:
             import configs.SL_lab3_datasets_lists_without_cmp as datasets_module
-            print("已成功导入模块 configs.SL_local_datasets_lists")
+            print("Successfully imported module configs.SL_local_datasets_lists")
             return datasets_module
         except ImportError as e:
-            print(f"导入模块 configs.SL_local_datasets_lists 失败: {e}")
+            print(f"Failed to import module configs.SL_local_datasets_lists: {e}")
             sys.exit(1)
 
     elif choice.lower() == 'sl_without_cmp_local':
         try:
             import configs.SL_local_datasets_lists_without_cmp as datasets_module
-            print("已成功导入模块 configs.SL_local_datasets_lists_without_cmp")
+            print("Successfully imported module configs.SL_local_datasets_lists_without_cmp")
             return datasets_module
         except ImportError as e:
-            print(f"导入模块 configs.SL_local_datasets_lists_without_cmp 失败: {e}")
+            print(f"Failed to import module configs.SL_local_datasets_lists_without_cmp: {e}")
             sys.exit(1)
 
     elif choice.lower() == 'test_local':
         try:
             import configs.Test_datasets as datasets_module
-            print("已成功导入模块 configs.Test_local")
+            print("Successfully imported module configs.Test_local")
             return datasets_module
         except ImportError as e:
-            print(f"导入模块 configs.Test_local 失败: {e}")
+            print(f"Failed to import module configs.Test_local: {e}")
             sys.exit(1)
     else:
-        print(f"未知的 dataset_type: '{choice}'. 请使用 'lab2' 或 'lab3'.")
+        print(f"Unknown dataset_type: '{choice}'. Please use 'lab2' or 'lab3'.")
         sys.exit(1)
 
 
 def visdom_display_save(vis, cam_crop, warped_predict, prj_GT, batch_size, step, phase='train',
                         max_nrow=5, save_path=None, win=None):
     """
-    可视化拼接后的图像并显示在 Visdom 窗口中，同时可选择将图像保存到本地文件。
+    Visualize the stitched images and display them in the Visdom window, with an option to save the images locally.
 
     Args:
-        vis (visdom.Visdom): 已初始化的 Visdom 客户端。
-        cam_crop (torch.Tensor): 裁剪后的相机图像张量，形状为 (batch_size, C, H, W)。
-        warped_predict (torch.Tensor): 扭曲预测图像张量，形状为 (batch_size, C, H, W)。
-        prj_GT (torch.Tensor): Ground Truth 投影图像张量，形状为 (batch_size, C, H, W)。
-        batch_size (int): 批量大小。
-        step (int): 当前的训练或验证步骤。
-        phase (str, optional): 当前阶段，'train' 或 'valid'。默认为 'train'。
-        max_nrow (int, optional): 每行的最大图像数量。默认为5。
-        win (str, optional): Visdom 窗口的唯一标识符。如果为None，将自动生成。
-        save_path (str, optional): 本地保存图像的路径。如果为None，则不保存。默认为None。
+        vis (visdom.Visdom): Initialized Visdom client.
+        cam_crop (torch.Tensor): Cropped camera image tensor with shape (batch_size, C, H, W).
+        warped_predict (torch.Tensor): Warped predicted image tensor with shape (batch_size, C, H, W).
+        prj_GT (torch.Tensor): Ground Truth projected image tensor with shape (batch_size, C, H, W).
+        batch_size (int): Batch size.
+        step (int): Current training or validation step.
+        phase (str, optional): Current phase, 'train' or 'valid'. Default is 'train'.
+        max_nrow (int, optional): Maximum number of images per row. Default is 5.
+        win (str, optional): Unique identifier for the Visdom window. If None, it will be auto-generated.
+        save_path (str, optional): Path to save the images locally. If None, images will not be saved. Default is None.
 
     Returns:
         None
     """
     with torch.no_grad():
-        # 判断 batch_size 并选择前 max_nrow 个样本
+        # Select the first max_nrow samples based on batch_size
         if batch_size > max_nrow:
-            # print(f"Batch size {batch_size} > {max_nrow}, 选择前 {max_nrow} 个样本进行可视化。")
+            # print(f"Batch size {batch_size} > {max_nrow}, selecting first {max_nrow} samples for visualization.")
             cam_crop = cam_crop[:max_nrow]
             warped_predict = warped_predict[:max_nrow]
             prj_GT = prj_GT[:max_nrow]
         else:
-            print(f"Batch size {batch_size} <= {max_nrow}, 使用全部 {batch_size} 个样本进行可视化。")
+            print(f"Batch size {batch_size} <= {max_nrow}, using all {batch_size} samples for visualization.")
 
-        # 拼接图像张量
+        # Concatenate the image tensors
         images = torch.cat([cam_crop, warped_predict, prj_GT], dim=0)
-        # print(f"拼接后的图像形状: {images.shape}")  # 预期形状 (3 * selected_count, C, H, W)
+        # print(f"Concatenated image shape: {images.shape}")  # Expected shape (3 * selected_count, C, H, W)
 
-        # 创建图像网格
+        # Create the image grid
         nrow = min(batch_size, max_nrow)
         images_grid = vutils.make_grid(images, nrow=nrow, normalize=True, scale_each=True)
-        # print(f"图像网格形状: {images_grid.shape}")  # 预期形状 (C, H, W)
+        # print(f"Image grid shape: {images_grid.shape}")  # Expected shape (C, H, W)
 
-        # 生成窗口ID，如果未提供
+        # Generate window ID if not provided
         if win is None:
             win = f"{phase}_{step}"
 
-        # 设置标题
+        # Set the title
         full_title = f"{phase.capitalize()}_Step: {step}"
 
-        # 显示图像在 Visdom 中
+        # Display the images in Visdom
         vis.image(
-            images_grid.cpu().numpy(),  # 无需交换维度
+            images_grid.cpu().numpy(),  # No need to swap dimensions
             opts=dict(title=full_title),
             win=win
         )
-        # print(f"已在 Visdom 窗口 '{win}' 中显示: {full_title}")
+        # print(f"Displayed in Visdom window '{win}': {full_title}")
 
-        # 保存图像到本地文件（如果提供了 save_path）
+        # Save the images to local file if save_path is provided
         if save_path is not None:
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)  # 确保保存目录存在
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)  # Ensure the save directory exists
             vutils.save_image(images, save_path, nrow=nrow, normalize=True, scale_each=True)
-            # print(f"图像已保存到: {save_path}"
+            # print(f"Images saved to: {save_path}"
 
 
 def log_test_metrics(logger, step, metrics):
     """
-    记录测试指标到 WandB。
+    Log test metrics to WandB.
     Parameters:
-    - logger (WandBLogger): WandB 记录器实例
-    - step (int): 当前步骤，用于作为横坐标
-    - metrics (dict): 需要记录的指标字典，包含 'test_mae', 'test_ssim', 'test_psnr', 'test_rmse', 'test_deltaE', 'test_lpips'
+    - logger (WandBLogger): WandB logger instance
+    - step (int): Current step, used as the x-coordinate
+    - metrics (dict): Metrics dictionary to log, including 'test_mae', 'test_ssim', 'test_psnr', 'test_rmse', 'test_deltaE', 'test_lpips'
     """
-    # 记录每个单独的指标
+    # Log each individual metric
     for key, value in metrics.items():
         logger.log_metrics(step, {key: value})
 
-        # 计算总损失并记录
+        # Calculate and log total loss
     total_loss = (
             metrics['test_mae'] +
             metrics['test_ssim'] +

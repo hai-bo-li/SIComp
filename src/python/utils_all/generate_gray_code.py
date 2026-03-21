@@ -331,50 +331,6 @@ def warp_imgs(im_src, src_xy, dst_xy, dst_w, dst_h, outSize):
         return warped_resized
 
 
-# yucheng
-# def warp_imgs(im_src, src_xy, dst_xy, dst_w, dst_h, outSize, tri=None):
-#     dst_x_dense, dst_y_dense = np.meshgrid(np.arange(dst_w), np.arange(dst_h))
-#     dst_points = np.column_stack((dst_x_dense.ravel(), dst_y_dense.ravel()))
-#
-#     if tri is None:
-#         tri = Delaunay(dst_xy)
-#
-#     interpolator = LinearNDInterpolator(tri, src_xy)
-#     src_xy_dense = interpolator(dst_points).reshape(dst_h, dst_w, 2).astype(np.float32)
-#
-#     x_map, y_map = src_xy_dense[..., 0], src_xy_dense[..., 1]
-#
-#     x_map_umat = cv.UMat(x_map)
-#     y_map_umat = cv.UMat(y_map)
-#
-#     if im_src.ndim == 4:
-#         n, h, w, c = im_src.shape
-#         im_dst_resize = np.empty((n, outSize[0], outSize[1], c), dtype=im_src.dtype)
-#
-#         for i in range(n):
-#             im_src_umat = cv.UMat(im_src[i])
-#
-#             im_dst_umat = cv.remap(
-#                 im_src_umat, x_map_umat, y_map_umat, interpolation=cv.INTER_LINEAR
-#             )
-#
-#             im_dst = im_dst_umat.get()
-#
-#             im_dst_resize[i] = crop_and_resize(im_dst, dst_w, dst_h, outSize)
-#     else:
-#         im_src_umat = cv.UMat(im_src)
-#
-#         im_dst_umat = cv.remap(
-#             im_src_umat, x_map_umat, y_map_umat, interpolation=cv.INTER_LINEAR
-#         )
-#
-#         im_dst = im_dst_umat.get()
-#
-#         im_dst_resize = crop_and_resize(im_dst, dst_w, dst_h, outSize)
-#
-#     return im_dst_resize
-
-
 class ImageWarper:
     def __init__(self, src_xy, dst_xy, dst_w, dst_h, outSize):
         """
