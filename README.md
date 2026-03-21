@@ -195,7 +195,7 @@ If you find this work useful in your research, please consider citing:
 ```
 
 **Project Links:**
-- **Project Page:** [https://hai-bo-li.github.io/SIComp/](https://hai-bo-li.github.io/SIComp)
+- **Project Page:** [https://hai-bo-li.github.io/SIComp](https://hai-bo-li.github.io/SIComp)
 - **GitHub:** [https://github.com/Hai-Bo-Li/SIComp](https://github.com/hai-bo-li/SIComp)
 - **Paper:** Coming soon
 
