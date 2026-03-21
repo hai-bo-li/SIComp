@@ -177,7 +177,7 @@ bash reproduce_paper_results.sh
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This software is freely available for non-profit non-commercial use, and may be redistributed under the conditions in the [LICENSE](LICENSE) file.
 
 ---
 
