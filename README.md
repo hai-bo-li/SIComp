@@ -188,8 +188,9 @@ If you find this work useful in your research, please consider citing:
 ```bibtex
 @article{Li2026SIComp,
   title={Setup-Independent Full Projector Compensation},
-  author={Li, Haibo and Deng, Qingyue and Li, Jijiang and Ling, Haibin and Huang, Bingyao},
-  journal={IEEE Transactions on Visualization and Computer Graphics (TVCG)},
+  author={Haibo Li and Qingyue Deng and Jijiang Li and Haibin Ling and Bingyao Huang},
+  journal={IEEE Transactions on Visualization and Computer Graphics},
+  note={In Press},
   year={2026}
 }
 ```
