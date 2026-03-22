@@ -98,7 +98,7 @@
           <img src="static/images/teaser_01.png" alt="Overview of SIComp" style="width: 100%; height: auto; border-radius: 12px;">
           <div class="content has-text-justified" style="margin-top: 1.5rem;">
             <p>
-              Overview of our setup-independent full projector compensation framework. SIComp is designed to generalize across unseen projector-camera configurations, surface materials, and illumination conditions, enabling high-quality compensation without setup-specific retraining or fine-tuning.
+              Overview of our setup-independent full projector compensation framework. SIComp is designed to generalize across unseen projector-camera poses, surfaces, and photometric conditions, enabling high-quality compensation without setup-specific retraining or fine-tuning. (a) Data acquisition and preprocessing. (b) Factors involved in setup variation. (c) The difference between SIComp and previous methods: SIComp can directly perform compensation using pretrained models.
             </p>
           </div>
         </div>
@@ -114,7 +114,7 @@
           <img src="static/images/SIComp_01.png" alt="Method overview of SIComp" style="width: 100%; height: auto; border-radius: 12px;">
           <div class="content has-text-justified" style="margin-top: 1.5rem;">
             <p>
-              The overview of SIComp. Our method decouples online geometric correction and photometric compensation: a tailored optical-flow module first estimates geometric alignment, and a dedicated compensation network then restores the desired appearance. Intensity-varying surface priors are further incorporated to improve robustness and generalization across unseen setups.
+              The overview of SIComp. Our method decouples online geometric correction and photometric compensation: a tailored optical-flow module first estimates geometric alignment, and a dedicated compensation network then compensates for photometric distortions. Intensity-varying surface priors are further incorporated to improve robustness and generalization across unseen setups. (a) Acquisition and preprocessing of surface images and uncompensated images. (b) Joint fine-tuning of the geometric network and the photometric network. (c) Compensation pipeline in real-world scenarios: the uncompensated image and the surface image are used as inputs, and the compensation image is generated, projected, and then captured.
             </p>
           </div>
         </div>
@@ -130,7 +130,7 @@
           <img src="static/images/real_compensation_results_01.png" alt="Qualitative results of SIComp" style="width: 100%; height: auto; border-radius: 12px;">
           <div class="content has-text-justified" style="margin-top: 1.5rem;">
             <p>
-              Qualitative results of SIComp on real compensation benchmarks. SIComp consistently produces visually faithful compensation results under challenging geometric distortions, nonplanar surfaces, textured materials, and varying illumination, demonstrating strong cross-setup generalization on unseen real-world setups.
+              Qualitative results of SIComp on real compensation benchmarks. The first two rows show compensation results on unseen setups captured with the same acquisition devices as the training set. The last two rows show compensation results on unseen setups captured with different acquisition devices from the training set. Our method is denoted as SIComp, and <em>surf</em> indicates the number of multi-intensity surface inputs used for compensation.
             </p>
           </div>
         </div>
@@ -146,7 +146,7 @@
           <img src="static/images/dataset_01.png" alt="Overview of the SIComp benchmark dataset" style="width: 100%; height: auto; border-radius: 12px;">
           <div class="content has-text-justified" style="margin-top: 1.5rem;">
             <p>
-              Overview of the SIComp benchmark dataset. It contains 277 distinct projector-camera setups and includes <strong>SetA_Surrogate</strong>, <strong>SetA_Real_Compensation</strong>, and <strong>SetB_Real_Compensation</strong>, providing a large-scale real-world benchmark for setup-independent projector compensation. The training set is currently being organized and will be released later.
+              Overview of the SIComp benchmark dataset. It contains 277 distinct projector-camera setups and 193,900 images, providing a large-scale training and testing dataset for setup-independent projector compensation. The benchmark dataset has been released on our cloud storage, and the download link is available on our GitHub project page.
             </p>
           </div>
         </div>
