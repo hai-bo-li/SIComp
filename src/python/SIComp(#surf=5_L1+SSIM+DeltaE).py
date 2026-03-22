@@ -3,7 +3,6 @@ from tqdm import tqdm
 from core.FlowFormer import build_flowformer
 from configs.local.SIComp_surf5_l1_ssim_deltaE_Compensation_Image_config import get_cfg
 from All_Model import *
-# from All_Model import Connection
 from utils_all.Datasets import FlowFormerDataset
 from utils_all.pytorch_ssim import *
 from utils_all.differential_color_function import *
@@ -122,14 +121,6 @@ if __name__ == '__main__':
                 # --- Optional: visualize and save the optical flow map ---
                 # Build the save path
                 prj_cmp_path = os.path.join(datasets_module.valid_data_root, data_name, f'prj/cmp/{model_name}')
-                # if not os.path.exists(prj_cmp_path): os.makedirs(prj_cmp_path)
-                # flow_vis_path = os.path.join(prj_cmp_path, "fixed_flow_visualization.png")
-                # # Make sure prj_cmp_path already exists
-                # if not os.path.exists(prj_cmp_path): os.makedirs(prj_cmp_path)
-                #
-                # save_flow_to_vismap(OmniCompNet_full.fixed_flow, flow_vis_path, max_flow=20)
-                #
-                # print(f">>> Standard optical flow visualization saved to: {flow_vis_path}")
             print(f">>> Dataset [{data_name}] flow fixed using Training Frame Index {target_idx}.")
 
             # --- Step 3: prepare test data and ground-truth desire images ---

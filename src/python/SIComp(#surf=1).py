@@ -3,7 +3,6 @@ from tqdm import tqdm
 from core.FlowFormer import build_flowformer
 from configs.local.SIComp_surf1_Compensation_Image_config import get_cfg
 from All_Model import *
-# from All_Model import Connection
 from utils_all.Datasets import FlowFormerDataset
 from utils_all.pytorch_ssim import *
 from utils_all.differential_color_function import *

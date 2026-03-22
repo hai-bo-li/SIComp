@@ -51,7 +51,6 @@ class ChannelAttention(nn.Module):
         max_out = self.fc2(self.relu1(self.fc1(self.max_pool(x))))
         return self.sigmoid(avg_out + max_out)
 
-
 # Spatial attention module
 class SpatialAttention(nn.Module):
     def __init__(self, kernel_size=7):
@@ -609,9 +608,8 @@ class CompenNeSt(nn.Module):
 
         self.apply(_initialize_weights)
 
-    # simplify trained model by trimming surface branch to biases
+
     def simplify(self, s):
-        #这个输入是怎么样的s！
         res1_s = self.relu(self.skipConv11(s))
         res1_s = self.relu(self.skipConv12(res1_s))
         res1_s = self.skipConv13(res1_s)
@@ -695,19 +693,21 @@ import numpy as np
 
 def tensor_to_cvimg(tensor, img_index=0):
     """
-    将一个 [B, 15, H, W] 的 tensor 中的第 img_index 张 RGB 图片（3通道）转换为 OpenCV 图像（BGR）
-    默认提取第4张图（索引3），即通道9~11
+    Convert the RGB image at index ``img_index`` from a tensor of shape [B, 15, H, W]
+    into an OpenCV image in BGR format.
 
-    参数：
+    By default, this extracts the 4th image (index 3), corresponding to channels 9 to 11.
+
+    Args:
     - tensor: [B, 15, H, W]
-    - img_index: 第几张图（从0开始）
+    - img_index: Image index to extract, starting from 0
 
-    返回：
-    - OpenCV 格式的 BGR 图像（uint8）
+    Returns:
+    - OpenCV-format BGR image (uint8)
     """
-    assert tensor.shape[1] % 3 == 0, "通道数必须是3的倍数（每张图3通道）"
+    assert tensor.shape[1] % 3 == 0, "The number of channels must be a multiple of 3 (3 channels per image)"
     num_imgs = tensor.shape[1] // 3
-    assert 0 <= img_index < num_imgs, f"img_index 应该在 [0, {num_imgs-1}] 范围内"
+    assert 0 <= img_index < num_imgs, f"img_index should be within the range [0, {num_imgs-1}]"
 
     start_c = img_index * 3
     end_c = start_c + 3
@@ -831,7 +831,6 @@ def flow_to_image(flow_uv, clip_flow=None, convert_to_bgr=False, max_flow=None):
     v = v / (rad_max + epsilon)
     return flow_uv_to_colors(u, v, convert_to_bgr)
 
-#Connection 新版
 class Connection(nn.Module):
     def __init__(self, G_Net, P_Net, warp_func, actual_cmp=False, train_size=(256, 256)):
         super(Connection, self).__init__()
@@ -846,12 +845,11 @@ class Connection(nn.Module):
     def forward(self, GT, x, s, desire_x=None, step=1):
         b, c, h, w = x.shape
 
-        # --- 核心修改：光流逻辑 ---
         if self.fixed_flow is not None:
-            # 如果已有缓存，将其从 [1, 2, H, W] 扩展到当前 BatchSize [B, 2, H, W]
+            # If a cached flow already exists, expand it from [1, 2, H, W] to the current batch size [B, 2, H, W]
             flow = self.fixed_flow.repeat(b, 1, 1, 1)
         else:
-            # 如果没有缓存（训练模式下），则实时计算
+            # If there is no cached flow, compute it on the fly
             input_size = (h, w)
             if input_size != self.train_size:
                 flow = predict_flow_highres(self.FlowFormer, GT, x,
@@ -860,7 +858,7 @@ class Connection(nn.Module):
             else:
                 flow = self.FlowFormer(GT, x)
 
-        # --- 补偿/投影逻辑 ---
+        # Compensation / projection logic
         if self.actual_cmp:
             if desire_x is None:
                 raise ValueError("desire_x is required for actual compensation mode.")
@@ -874,11 +872,11 @@ class Connection(nn.Module):
             predict = self.CompenNeSt(x_warped, s_warped)
             return predict
 
-#新版FlowCompensationModel
 class FlowCompensationModel(nn.Module):
     def __init__(self, flow_model, compensation_model, warp_func, actual_compensation=False, train_size=(256, 256)):
         """
-        通用的 Flow Compensation 模型，模仿 Connection 类的 buffer 缓存逻辑。
+        Generic Flow Compensation model that follows the buffer-based caching logic
+        used in the Connection class.
         """
         super(FlowCompensationModel, self).__init__()
         self.flow_model = flow_model
@@ -887,20 +885,20 @@ class FlowCompensationModel(nn.Module):
         self.actual_compensation = actual_compensation
         self.train_size = train_size
 
-        # --- 核心修改：使用 register_buffer 存储固定光流 ---
-        # 这样它会随模型自动移动到 GPU/CPU，且不参与梯度更新
+        # Core update: use register_buffer to store a fixed flow tensor
+        # This allows it to move with the model between GPU/CPU and keeps it out of gradient updates
         self.register_buffer('fixed_flow', None)
 
     def forward(self, GT, x, s, desire_x=None):
         b, c, h, w = x.shape
         input_size = (h, w)
 
-        # --- 核心修改：光流逻辑 ---
+        # Core update: optical flow logic
         if self.fixed_flow is not None:
-            # 如果已有缓存，将其从 [1, 2, H, W] 扩展到当前 BatchSize [B, 2, H, W]
+            # If a cached flow already exists, expand it from [1, 2, H, W] to the current batch size [B, 2, H, W]
             flow = self.fixed_flow.repeat(b, 1, 1, 1)
         else:
-            # 如果没有缓存，则实时计算
+            # If there is no cached flow, compute it on the fly
             if input_size != self.train_size:
                 flow = predict_flow_highres(self.flow_model, GT, x,
                                             target_size=input_size,
@@ -908,7 +906,7 @@ class FlowCompensationModel(nn.Module):
             else:
                 flow = self.flow_model(GT, x)
 
-        # --- 补偿/投影逻辑 ---
+        # Compensation / projection logic
         if self.actual_compensation:
             if desire_x is None:
                 raise ValueError("desire_x is required for actual compensation mode.")

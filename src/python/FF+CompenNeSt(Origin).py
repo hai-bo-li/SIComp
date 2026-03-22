@@ -132,14 +132,14 @@ if __name__ == '__main__':
                 print(f"cmp_time lapse : {time_lapse},cmp_memory : {max_mem}")
     elif args.mode == "valid":
         print('------------------------------------ Start Valid -------------------------------')
-        # 1. Initialize the model
+        # Initialize the model
         FF_CompenNeSt = FlowCompensationModel(FlowFormer, CompenNeSt, warp_func=warp_images).to(device)
         FF_CompenNeSt = FF_CompenNeSt.to(device)
 
-        # 2. Load the weights
+        # Load the weights
         FF_CompenNeSt.load_state_dict(torch.load(cfg.FF_CompenNeSt_origin_pretrain_path))
         FF_CompenNeSt.eval()
-        # 3. Start the regular validation loop
+        # Start the regular validation loop
         all_metrics = {'mse': 0, 'rmse': 0, 'psnr': 0, 'ssim': 0, 'deltaE': 0, 'lpips': 0}
         dataset_count = 0
         target_idx = 33
@@ -157,7 +157,7 @@ if __name__ == '__main__':
             blob = flow_init_dataset[target_idx]
             cam_train = blob[0].unsqueeze(0).to(device)  # [1, C, H, W]
             gt_train = blob[1].unsqueeze(0).to(device)
-            # --- Step 2: compute and cache the fixed optical flow for the current dataset ---
+            # compute and cache the fixed optical flow for the current dataset ---
             with torch.no_grad():
                 h_t, w_t = cam_train.shape[-2:]
                 if (h_t, w_t) != FF_CompenNeSt.train_size:
@@ -212,16 +212,6 @@ if __name__ == '__main__':
 
                     # Save images
                     flow_saveImgs(predicted, test_path, start_idx=total_images_saved)
-                    # # 4. 【关键修正】保存无损 Tensor (.pt)
-                    # # 此时 total_images_saved 还没有增加，idx 会从 00000 开始，完美对齐 GT
-                    # pt_save_path = os.path.join(test_path, 'tensors')
-                    # os.makedirs(pt_save_path, exist_ok=True)
-                    #
-                    # for j in range(predicted.size(0)):
-                    #     idx = total_images_saved + j  # 这里的 idx 现在是正确的了
-                    #     torch.save(predicted[j].detach().cpu(), os.path.join(pt_save_path, f"{idx:05d}.pt"))
-
-                    # 5. Update the index at the end
                     total_images_saved += predicted.size(0)
                     batch_count += 1
 

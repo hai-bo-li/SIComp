@@ -118,17 +118,9 @@ if __name__ == '__main__':
                 # --- Optional: visualize and save the optical flow map ---
                 # Build the save path
                 prj_cmp_path = os.path.join(datasets_module.valid_data_root, data_name, f'prj/cmp/{model_name}')
-                # if not os.path.exists(prj_cmp_path): os.makedirs(prj_cmp_path)
-                # flow_vis_path = os.path.join(prj_cmp_path, "fixed_flow_visualization.png")
-                # # Make sure prj_cmp_path already exists
-                # if not os.path.exists(prj_cmp_path): os.makedirs(prj_cmp_path)
-                #
-                # save_flow_to_vismap(OmniCompNet_full.fixed_flow, flow_vis_path, max_flow=20)
-                #
-                # print(f">>> Standard optical flow visualization saved to: {flow_vis_path}")
+
             print(f">>> Dataset [{data_name}] flow fixed using Training Frame Index {target_idx}.")
 
-            # --- Step 3: prepare test data and ground-truth desire images ---
             desire_test_path = os.path.join(datasets_module.valid_data_root, data_name, 'cam/crop/desire')
             desire_test_loader = Get_dataLoader(desire_test_path, cfg=cfg)
             assert os.path.isdir(desire_test_path), 'images and folder {:s} does not exist!'.format(desire_test_path)
@@ -152,15 +144,12 @@ if __name__ == '__main__':
                     cam_crop, prj_GT, surfs_crop = [x.to(device) for x in data_blob]
                     desire_test = desire_test.permute(0, 3, 1, 2).float().div(255).to(device)
 
-                    # Core prediction: the model should already be configured to use fixed_flow
-                    # Calling forward here avoids running the internal FlowFormer again
                     prj_cmp_test = FF_CompenNeSt(prj_GT, cam_crop, surfs_crop, desire_test)
 
                     # Save the compensated projection images
                     flow_saveImgs(prj_cmp_test, prj_cmp_path, start_idx=total_images_saved)
                     total_images_saved += prj_cmp_test.size(0)
 
-                # --- Step 5: summarize results for the current dataset ---
                 print(f'>>> Compensation images for [{data_name}] saved to {prj_cmp_path}')
 
                 elapsed = time.time() - start_time
@@ -189,8 +178,6 @@ if __name__ == '__main__':
         target_idx = 33
         for data_name in datasets_module.valid_data_lists:
             print(f"\n>>> Processing Dataset: [{data_name}]")
-            # --- Step 1: extract only the specified reference training frame for the current dataset ---
-            # Set num_train to target_idx + 1 to ensure the index is valid with no extra redundancy
             flow_init_dataset = FlowFormerDataset(
                 datasets_module.valid_data_root, [data_name],
                 phase='train',
@@ -201,7 +188,7 @@ if __name__ == '__main__':
             blob = flow_init_dataset[target_idx]
             cam_train = blob[0].unsqueeze(0).to(device)  # [1, C, H, W]
             gt_train = blob[1].unsqueeze(0).to(device)
-            # --- Step 2: compute and cache the fixed optical flow for the current dataset ---
+            # compute and cache the fixed optical flow for the current dataset ---
             with torch.no_grad():
                 h_t, w_t = cam_train.shape[-2:]
                 if (h_t, w_t) != FF_CompenNeSt.train_size:

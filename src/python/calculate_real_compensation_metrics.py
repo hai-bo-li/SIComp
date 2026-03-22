@@ -133,9 +133,6 @@ def crop_image(image, bbox):
 # Assume these helper functions already exist
 # from differential_color_function import * # from utils_all.pytorch_ssim import SSIM
 
-# ==========================================
-# Core metric computation function (strictly follows the original logic)
-# ==========================================
 def calculate_metrics_strict(pred, target):
     # Make sure inputs are tensors in the [0, 1] range
     if pred.max() > 1.0 or target.max() > 1.0:
@@ -164,10 +161,6 @@ def calculate_metrics_strict(pred, target):
 
         return mae, rmse, psnr, ssim, deltaE, lp
 
-
-# ==========================================
-# Main program logic
-# ==========================================
 def run_real_compensation_eval(data_path, data_list):
     all_summary = []
 
@@ -262,17 +255,16 @@ def run_real_compensation_eval(data_path, data_list):
 
 
 def save_final_excel(results, root):
-    # 1. Create DataFrame
+    # Create DataFrame
     df = pd.DataFrame(results)
-
-    # 2. Compute the mean across all datasets
+    # Compute the mean across all datasets
     # Do not call .round(4) here, otherwise Excel formatting will not take effect
     df_avg = df.groupby('Model').mean(numeric_only=True).reset_index()
 
-    # 3. Replace DeltaE column name with the ΔE symbol
+    # Replace DeltaE column name with the ΔE symbol
     df_avg = df_avg.rename(columns={'DeltaE': 'ΔE'})
 
-    # 4. Ensure the column order is correct
+    # Ensure the column order is correct
     cols = ['Model', 'PSNR', 'RMSE', 'SSIM', 'ΔE', 'LPIPS', 'FID']
     # Only keep columns that actually exist
     existing_cols = [c for c in cols if c in df_avg.columns]
@@ -280,7 +272,7 @@ def save_final_excel(results, root):
 
     path = os.path.join(root, "Actual_Final_Metrics.xlsx")
 
-    # 5. Save with the xlsxwriter engine
+    # Save with the xlsxwriter engine
     with pd.ExcelWriter(path, engine='xlsxwriter') as writer:
         df_avg.to_excel(writer, sheet_name='Summary', index=False)
 
@@ -327,6 +319,4 @@ if __name__ == '__main__':
 
     print(f"🚀 [Total Eval] Starting full evaluation on: {data_root}")
     print(f"📂 Datasets to process: {data_list}")
-
-    # Run the evaluation once with the complete dataset list
     run_real_compensation_eval(data_root, data_list)

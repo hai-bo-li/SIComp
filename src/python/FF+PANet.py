@@ -255,17 +255,7 @@ if __name__ == '__main__':
 
                     # Save images
                     flow_saveImgs(predicted, test_path, start_idx=total_images_saved)
-                    # # 4. Key fix: save lossless tensors (.pt)
-                    # # At this point total_images_saved has not been updated yet,
-                    # # so idx starts from 00000 and aligns perfectly with GT
-                    # pt_save_path = os.path.join(test_path, 'tensors')
-                    # os.makedirs(pt_save_path, exist_ok=True)
-                    #
-                    # for j in range(predicted.size(0)):
-                    #     idx = total_images_saved + j  # The idx is correct here now
-                    #     torch.save(predicted[j].detach().cpu(), os.path.join(pt_save_path, f"{idx:05d}.pt"))
 
-                    # 5. Update the index at the end
                     total_images_saved += predicted.size(0)
                     batch_count += 1
 

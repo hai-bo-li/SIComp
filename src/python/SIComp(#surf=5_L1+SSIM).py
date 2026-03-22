@@ -1,15 +1,8 @@
-# import os
-# import sys
-# from pathlib import Path
-# # Add the parent directory (SIComp/src/python) to sys.path
-# sys.path.append(str(Path(__file__).resolve().parents[1]))
-
 import warnings
 from tqdm import tqdm
 from core.FlowFormer import build_flowformer
 from configs.local.SIComp_surf5_l1_ssim_Compensation_Image_config import get_cfg
 from All_Model import *
-# from All_Model import Connection
 from utils_all.Datasets import FlowFormerDataset
 from utils_all.pytorch_ssim import *
 from utils_all.differential_color_function import *
