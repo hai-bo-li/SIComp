@@ -95,12 +95,12 @@
       <div class="columns is-centered has-text-centered">
         <div class="column is-full">
           <h2 class="title is-3">Overview</h2>
-          <div class="content has-text-justified">
+          <embed src="static/images/teaser.pdf" type="application/pdf" width="100%" height="620px">
+          <div class="content has-text-justified" style="margin-top: 1.5rem;">
             <p>
               SIComp addresses full projector compensation in a setup-independent manner. Unlike prior methods that require setup-specific retraining or fine-tuning, SIComp is designed to generalize across unseen projector-camera configurations, surface materials, and illumination conditions. The overview below highlights the task setting and the motivation for decoupling geometric correction from photometric compensation.
             </p>
           </div>
-          <embed src="static/images/teaser.pdf" type="application/pdf" width="100%" height="620px">
         </div>
       </div>
     </div>
@@ -111,12 +111,12 @@
       <div class="columns is-centered has-text-centered">
         <div class="column is-full">
           <h2 class="title is-3">Method</h2>
-          <div class="content has-text-justified">
+          <embed src="static/images/SIComp.pdf" type="application/pdf" width="100%" height="760px">
+          <div class="content has-text-justified" style="margin-top: 1.5rem;">
             <p>
               Our method adopts a co-adaptive design that separates online geometric correction from photometric compensation. A tailored optical-flow module first aligns the input with the target projection geometry, and a dedicated photometric compensation network then restores the desired appearance under varying surface and lighting conditions. In addition, SIComp incorporates intensity-varying surface priors to improve robustness and generalization across unseen setups.
             </p>
           </div>
-          <embed src="static/images/SIComp.pdf" type="application/pdf" width="100%" height="760px">
         </div>
       </div>
     </div>
@@ -127,12 +127,12 @@
       <div class="columns is-centered has-text-centered">
         <div class="column is-full">
           <h2 class="title is-3">Results</h2>
-          <div class="content has-text-justified">
+          <embed src="static/images/real_compensation_results.pdf" type="application/pdf" width="100%" height="760px">
+          <div class="content has-text-justified" style="margin-top: 1.5rem;">
             <p>
               We evaluate SIComp on real compensation benchmarks covering diverse unseen setups. The qualitative results below show that SIComp consistently produces visually faithful compensation results under challenging geometric distortions, nonplanar surfaces, textured materials, and varying illumination, outperforming previous setup-dependent baselines in cross-setup generalization.
             </p>
           </div>
-          <embed src="static/images/real_compensation_results.pdf" type="application/pdf" width="100%" height="760px">
         </div>
       </div>
     </div>
@@ -143,12 +143,12 @@
       <div class="columns is-centered has-text-centered">
         <div class="column is-full">
           <h2 class="title is-3">Dataset</h2>
-          <div class="content has-text-justified">
+          <embed src="static/images/dataset.pdf" type="application/pdf" width="100%" height="760px">
+          <div class="content has-text-justified" style="margin-top: 1.5rem;">
             <p>
               To support setup-independent projector compensation, we build a large-scale real-world benchmark containing 277 distinct projector-camera setups. The released benchmark includes <strong>SetA_Surrogate</strong>, <strong>SetA_Real_Compensation</strong>, and <strong>SetB_Real_Compensation</strong>. Please download the dataset from the link above and place the extracted files into the <code>data</code> directory following the repository instructions. The training set is still being organized and will be released later.
             </p>
           </div>
-          <embed src="static/images/dataset.pdf" type="application/pdf" width="100%" height="760px">
         </div>
       </div>
     </div>
