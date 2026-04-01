@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Setup-Independent Full Projector Compensation</title>
+  
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+</head>
+<body>
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">Setup-Independent Full Projector Compensation</h1>
+            
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">
+                <a href="https://orcid.org/0009-0006-9201-104X" target="_blank">Haibo Li</a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://realqingyue.github.io/" target="_blank">Qingyue Deng</a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://jijiangli.github.io/" target="_blank">Jijiang Li</a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://haibinling.github.io/" target="_blank">Haibin Ling</a><sup>2</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://bingyaohuang.github.io/" target="_blank">Bingyao Huang</a><sup>1†</sup>
+              </span>
+            </div>
+
+            <div class="is-size-5 publication-authors">
+              <span class="author-block"><sup>1</sup>Southwest University, China</span>
+              <span class="author-block"><sup>2</sup>Westlake University, China</span>
+              <span class="eql-cntrb"><small><br><sup>†</sup>Corresponding Author</small></span>
+            </div>
+
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <span class="link-block">
+                  <a href="static/pdfs/Setup_Independent_Full_Projector_Compensation_arxiv.pdf" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                    <span>Paper</span>
+                  </a>
+                </span>
+
+                <span class="link-block">
+                  <a href="https://github.com/hai-bo-li/SIComp" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fab fa-github"></i></span>
+                    <span>Code</span>
+                  </a>
+                </span>
+
+                <span class="link-block">
+                  <a href="https://pan.baidu.com/s/1WYFhOsGlgVD5uP41hqPg5A?pwd=1122" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-database"></i></span>
+                    <span>Dataset</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <div class="publication-banner">
+            <video controls playsinline preload="metadata">
+              <source src="static/videos/Setup_Independent_Full_Projector_Compensation.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p>
+              Projector compensation seeks to correct geometric and photometric distortions that occur when images are projected onto nonplanar or textured surfaces. However, most existing methods are highly setup-dependent, requiring fine-tuning or retraining whenever the surface, lighting, or projector–camera pose changes. Progress has been limited by two key challenges: (1) the absence of large, diverse training datasets and (2) existing geometric correction models are typically constrained by specific spatial setups; without further retraining or fine-tuning, they often fail to generalize directly to novel geometric configurations. We introduce SIComp, the first setup-independent framework for full projector compensation, capable of generalizing to unseen setups without fine-tuning or retraining. To enable this, we construct a large-scale real-world dataset spanning 277 distinct projector–camera setups. SIComp adopts a co-adaptive design that decouples geometry and photometry: A carefully tailored optical flow module performs online geometric correction, while a novel photometric network handles photometric compensation. To further enhance robustness under varying illumination, we integrate intensity-varying surface priors into the network design. Extensive experiments demonstrate that SIComp consistently produces high-quality compensation across diverse unseen setups, substantially outperforming existing methods in terms of generalization ability and establishing the first generalizable solution to projector compensation.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full">
+          <h2 class="title is-3">Overview</h2>
+          <img src="static/images/teaser_01.png" alt="Overview of SIComp" style="width: 100%; height: auto; border-radius: 12px;">
+          <div class="content has-text-justified" style="margin-top: 1.5rem;">
+            <p>
+              Overview of our setup-independent full projector compensation framework (SIComp). SIComp is designed to generalize across unseen projector-camera poses, surfaces, and photometric conditions, enabling high-quality compensation without setup-specific retraining or fine-tuning. (a) Composition of the projector-camera system and an overview of the projector compensation task. (b) Factors involved in setup variation. (c) The difference between SIComp and previous methods: SIComp can directly perform compensation using pre-trained models.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full">
+          <h2 class="title is-3">Method</h2>
+          <img src="static/images/SIComp_01.png" alt="Method overview of SIComp" style="width: 100%; height: auto; border-radius: 12px;">
+          <div class="content has-text-justified" style="margin-top: 1.5rem;">
+            <p>
+              Overview of the SIComp framework. A tailored optical-flow module first estimates geometric alignment, and a dedicated compensation network then compensates for photometric distortions. Intensity-varying surface priors are further incorporated to improve robustness and generalization across unseen setups. (a) Sampling and preprocessing of surface images and uncompensated images. (b) Joint fine-tuning of the geometric network and the photometric network. (c) Compensation pipeline in real-world scenarios: the uncompensated image and the surface image are used as inputs, and the compensation image is generated, projected, and then captured.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full">
+          <h2 class="title is-3">Results</h2>
+          <img src="static/images/real_compensation_results_01.png" alt="Qualitative results of SIComp" style="width: 100%; height: auto; border-radius: 12px;">
+          <div class="content has-text-justified" style="margin-top: 1.5rem;">
+            <p>
+              Qualitative results of SIComp on real compensation benchmarks. The first two rows show compensation results on unseen setups captured with the same hardware devices as the training set. The last two rows show compensation results on unseen setups captured with different hardware devices from the training set. Our method is denoted as SIComp, and <em>surf</em> indicates the number of multi-intensity surface inputs used for compensation.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full">
+          <h2 class="title is-3">Dataset</h2>
+          <img src="static/images/dataset_01.png" alt="Overview of the SIComp benchmark dataset" style="width: 100%; height: auto; border-radius: 12px;">
+          <div class="content has-text-justified" style="margin-top: 1.5rem;">
+            <p>
+              Overview of the SIComp dataset. It contains 277 distinct projector-camera setups and 193,900 images, providing a large-scale benchmark for training and evaluation in setup-independent projector compensation. The benchmark dataset is hosted on Baidu Netdisk, and the download link is available on our GitHub project page.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <h2 class="title">BibTeX</h2>
+      <pre><code>@article{Li2026SIComp,
+  title={Setup-Independent Full Projector Compensation},
+  author={Haibo Li and Qingyue Deng and Jijiang Li and Haibin Ling and Bingyao Huang},
+  journal={IEEE Transactions on Visualization and Computer Graphics},
+  note={In Press},
+  year={2026}
+}</code></pre>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="content has-text-centered">
+        <p>Built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template">Academic Project Page Template</a>.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
