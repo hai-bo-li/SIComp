@@ -90,7 +90,6 @@ if __name__ == '__main__':
         for data_name in datasets_module.valid_data_lists:
             print(f"\n>>> Processing Actual Dataset: [{data_name}]")
 
-            # --- 步骤 1: 提取当前数据集指定的基准训练帧 (Index 33) 用于计算固定光流 ---
             # --- Step 1: extract the reference training frame (index 33) for the current dataset and compute fixed flow ---
             flow_init_dataset = FlowFormerDataset(
                 datasets_module.valid_data_root, [data_name],
@@ -101,15 +100,14 @@ if __name__ == '__main__':
             blob = flow_init_dataset[target_idx]
             cam_train = blob[0].unsqueeze(0).to(device)  # [1, C, H, W]
             gt_train = blob[1].unsqueeze(0).to(device)
+            start_time = time.time()
             if device.type == 'cuda':
                 torch.cuda.reset_peak_memory_stats(device=device)
                 start_time = time.time()
 
-            # --- 步骤 2: 计算并缓存该数据集的固定光流 ---
             # --- Step 2: compute and cache the fixed optical flow for the current dataset ---
             with torch.no_grad():
                 h_t, w_t = cam_train.shape[-2:]
-                # 如果尺寸不匹配，使用高分辨率预测函数
                 # Use the high-resolution flow predictor when the input size does not match
                 if (h_t, w_t) != OmniCompNet_full.train_size:
                     f_cached = predict_flow_highres(
@@ -119,27 +117,21 @@ if __name__ == '__main__':
                 else:
                     f_cached = OmniCompNet_full.FlowFormer(gt_train, cam_train)
 
-                # 将光流存入模型的 fixed_flow 属性中
                 # Store the optical flow in the model's fixed_flow attribute
                 OmniCompNet_full.fixed_flow = f_cached.detach()
-                # --- 新增：可视化并保存光流图 ---
                 # --- Optional: visualize and save the optical flow map ---
-                # 建立保存路径
                 # Build the save path
                 prj_cmp_path = os.path.join(datasets_module.valid_data_root, data_name, f'prj/cmp/{model_name}')
                 # if not os.path.exists(prj_cmp_path): os.makedirs(prj_cmp_path)
                 # flow_vis_path = os.path.join(prj_cmp_path, "fixed_flow_visualization.png")
-                # # 确保 prj_cmp_path 已经创建
                 # # Make sure prj_cmp_path already exists
                 # if not os.path.exists(prj_cmp_path): os.makedirs(prj_cmp_path)
                 #
                 # save_flow_to_vismap(OmniCompNet_full.fixed_flow, flow_vis_path, max_flow=20)
                 #
-                # print(f">>> 标准光流可视化已保存至: {flow_vis_path}")
                 # print(f">>> Standard optical flow visualization saved to: {flow_vis_path}")
             print(f">>> Dataset [{data_name}] flow fixed using Training Frame Index {target_idx}.")
 
-            # --- 步骤 3: 准备测试数据和真值 (Desire) ---
             # --- Step 3: prepare test data and ground-truth desire images ---
             desire_test_path = os.path.join(datasets_module.valid_data_root, data_name, 'cam/crop/desire')
             desire_test_loader = Get_dataLoader(desire_test_path, cfg=cfg)
@@ -156,28 +148,22 @@ if __name__ == '__main__':
             test_loader = DataLoader(test_dataset, cfg.batch_size, shuffle=False, num_workers=0)
             total_images_saved = 0
 
-            # --- 步骤 4: 开始补偿循环 ---
             # --- Step 4: start the compensation loop ---
             with torch.no_grad():
-                # 使用 zip 将测试数据和 Desire 真值对齐
                 # Use zip to align the test data and desire ground truth
                 for data_blob, desire_test in tqdm(zip(test_loader, desire_test_loader),
                                                    total=len(test_loader), desc=f"Actual CMP {data_name}"):
                     cam_crop, prj_GT, surfs_crop = [x.to(device) for x in data_blob]
                     desire_test = desire_test.permute(0, 3, 1, 2).float().div(255).to(device)
 
-                    # 核心预测：模型内部应已配置为使用 fixed_flow
-                    # 此时调用 forward，不再运行内部的 FlowFormer
                     # Core prediction: the model should already be configured to use fixed_flow
                     # Calling forward here avoids running the internal FlowFormer again
                     prj_cmp_test = OmniCompNet_full(prj_GT, cam_crop, surfs_crop, desire_test)
 
-                    # 保存补偿后的投影图
                     # Save the compensated projection images
                     flow_saveImgs(prj_cmp_test, prj_cmp_path, start_idx=total_images_saved)
                     total_images_saved += prj_cmp_test.size(0)
 
-                # --- 步骤 5: 统计当前数据集结果 ---
                 # --- Step 5: summarize results for the current dataset ---
                 print(f'>>> Compensation images for [{data_name}] saved to {prj_cmp_path}')
 
@@ -194,24 +180,19 @@ if __name__ == '__main__':
                 print(f"Dataset [{data_name}] Status -> Time: {time_lapse}, Max VRAM: {max_mem:.2f} MB")
     elif args.mode == "valid":
         print('------------------------------------ Start Valid -------------------------------')
-        # 1. 初始化模型
         # 1. Initialize the model
         OmniCompNet_full = Connection(FlowFormer, SCNet, warp_func=warp_images)
         OmniCompNet_full = OmniCompNet_full.to(device)
 
-        # 2. 加载权重
         # 2. Load the weights
         load_model_with_bias_resize(OmniCompNet_full, cfg.OmniCompNet_pretrian_path)
         OmniCompNet_full.eval()
-        # 3. 开始正常的验证循环
         # 3. Start the regular validation loop
         all_metrics = {'mse': 0, 'rmse': 0, 'psnr': 0, 'ssim': 0, 'deltaE': 0, 'lpips': 0}
         dataset_count = 0
         target_idx = 33
         for data_name in datasets_module.valid_data_lists:
             print(f"\n>>> Processing Dataset: [{data_name}]")
-            # --- 步骤 1: 仅针对当前数据集提取指定的基准训练帧 ---
-            # 设置 num_train 为 target_idx + 1，确保索引合法且无冗余
             # --- Step 1: extract only the specified reference training frame for the current dataset ---
             # Set num_train to target_idx + 1 to ensure the index is valid with no extra redundancy
             flow_init_dataset = FlowFormerDataset(
@@ -220,13 +201,11 @@ if __name__ == '__main__':
                 num_train=target_idx + 1,
                 transforms=data_transforms, surf_index=cfg.surf_indices
             )
-            # 直接通过索引取出特定帧，不启动 DataLoader，不产生循环冗余
             # Read the specific frame directly by index to avoid DataLoader overhead
             blob = flow_init_dataset[target_idx]
             cam_train = blob[0].unsqueeze(0).to(device)  # [1, C, H, W]
             gt_train = blob[1].unsqueeze(0).to(device)
 
-            # --- 步骤 2: 计算并缓存该数据集的固定光流 ---
             # --- Step 2: compute and cache the fixed optical flow for the current dataset ---
             with torch.no_grad():
                 h_t, w_t = cam_train.shape[-2:]
@@ -238,14 +217,12 @@ if __name__ == '__main__':
                 else:
                     f_cached = OmniCompNet_full.FlowFormer(gt_train, cam_train)
 
-                # 将该数据集的专属光流存入模型的 fixed_flow
                 # Store the dataset-specific optical flow in fixed_flow
                 OmniCompNet_full.fixed_flow = f_cached.detach()
 
             print(f">>> Dataset [{data_name}] flow fixed using Frame Index {target_idx}.")
             total_images_saved = 0
             test_path = os.path.join(datasets_module.valid_data_root, data_name, f'prj/test/{model_name}')
-            # 加载当前测试集
             # Load the current test set
             test_dataset = FlowFormerDataset(
                 datasets_module.valid_data_root,
@@ -268,15 +245,12 @@ if __name__ == '__main__':
                 for i_batch, data_blob in tqdm(enumerate(test_loader), total=len(test_loader), desc=f"Testing {data_name}:"):
                     cam_crop, prj_GT, surfs_crop = [x.to(device) for x in data_blob]
 
-                    # 此时调用 forward，内部会自动检查并使用 fixed_flow，不再运行 FlowFormer
                     # Calling forward here will automatically use fixed_flow instead of running FlowFormer
                     predicted = OmniCompNet_full(GT=prj_GT, x=cam_crop, s=surfs_crop)
 
-                    # 指标计算
                     # Metric computation
                     mse, rmse, psnr, ssim, deltaE, lpips = calculate_image_metrics(predicted, prj_GT)
 
-                    # 累计每个指标
                     # Accumulate each metric
                     total_metrics['mse'] += mse
                     total_metrics['rmse'] += rmse
@@ -316,12 +290,10 @@ if __name__ == '__main__':
                 print(f'{avg_mse:.4f} {avg_rmse:.4f}  {avg_psnr:.4f}  {avg_ssim:.4f}  {avg_deltaE:.4f}  {avg_lpips:.4f}')
                 print(f'Test images saved to: {test_path}')
 
-                # 保存每个数据集日志
                 # Save the log for each dataset
                 log_surrogate(save_metrics_folder, current_time, data_name, model_name, cfg.train_loss, cfg.num_train,
                               cfg.batch_size,
                               avg_psnr, avg_rmse, avg_ssim, avg_deltaE, avg_lpips)
-                # 统计所有数据集的平均值
                 # Accumulate averages across all datasets
                 all_metrics['mse'] += avg_mse
                 all_metrics['rmse'] += avg_rmse
@@ -331,7 +303,6 @@ if __name__ == '__main__':
                 all_metrics['lpips'] += avg_lpips
                 dataset_count += 1
 
-                # 全部数据集平均日志
                 # Aggregate log over all datasets
             if dataset_count > 0:
                 mean_mse = all_metrics['mse'] / dataset_count

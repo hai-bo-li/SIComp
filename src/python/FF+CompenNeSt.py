@@ -250,7 +250,7 @@ if __name__ == '__main__':
                     # os.makedirs(pt_save_path, exist_ok=True)
                     #
                     # for j in range(predicted.size(0)):
-                    #     idx = total_images_saved + j  # 这里的 idx 现在是正确的了
+                    #     idx = total_images_saved + j
                     #     torch.save(predicted[j].detach().cpu(), os.path.join(pt_save_path, f"{idx:05d}.pt"))
 
                     # 5. Update the index at the end

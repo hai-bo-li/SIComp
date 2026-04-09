@@ -121,14 +121,6 @@ if __name__ == '__main__':
                 # --- Optional: visualize and save the optical flow map ---
                 # Build the save path
                 prj_cmp_path = os.path.join(datasets_module.valid_data_root, data_name, f'prj/cmp/{model_name}')
-                # if not os.path.exists(prj_cmp_path): os.makedirs(prj_cmp_path)
-                # flow_vis_path = os.path.join(prj_cmp_path, "fixed_flow_visualization.png")
-                # # Make sure prj_cmp_path already exists
-                # if not os.path.exists(prj_cmp_path): os.makedirs(prj_cmp_path)
-                #
-                # save_flow_to_vismap(OmniCompNet_full.fixed_flow, flow_vis_path, max_flow=20)
-                #
-                # print(f">>> Standard optical flow visualization saved to: {flow_vis_path}")
             print(f">>> Dataset [{data_name}] flow fixed using Training Frame Index {target_idx}.")
 
             # --- Step 3: prepare test data and ground-truth desire images ---
@@ -265,8 +257,6 @@ if __name__ == '__main__':
                     total_images_saved += predicted.size(0)
                     batch_count += 1
 
-                # --- 每一个数据集跑完后的统计 ---
-                # 平均单个数据集指标
                 avg_mse = total_metrics['mse'] / batch_count
                 avg_rmse = total_metrics['rmse'] / batch_count
                 avg_psnr = total_metrics['psnr'] / batch_count

@@ -8,26 +8,28 @@ from .capture_utils import *
 
 def save_metrics_to_excel(results_list, excel_path='results.xlsx', mode='overwrite'):
     """
-    将评估指标保存到 Excel 文件中
+    Save evaluation metrics to an Excel file.
 
-    :param results_list: List[Dict]，每个字典包含模型名称、数据集名称及其指标
-    :param excel_path: 要保存的 Excel 文件路径
-    :param mode: 保存模式，'overwrite' 为覆盖写入，'append' 为追加写入（自动去重）
+    :param results_list: List[Dict], where each dictionary contains the model name,
+        dataset name, and corresponding metrics.
+    :param excel_path: Path to the Excel file to save.
+    :param mode: Save mode. 'overwrite' replaces the file, while 'append' appends
+        new results and removes duplicates automatically.
     """
     df_new = pd.DataFrame([results_list])
 
     if mode == 'overwrite' or not os.path.exists(excel_path):
         df_new.to_excel(excel_path, index=False)
-        print(f"[写入] 结果已保存至 {excel_path}")
+        print(f"[Write] Results saved to {excel_path}")
     elif mode == 'append':
         df_existing = pd.read_excel(excel_path)
-        # 合并并去重（按Model和Dataset两列去重）
+        # Merge and remove duplicates based on the Model and Dataset columns.
         df_all = pd.concat([df_existing, df_new], ignore_index=True)
         df_all.drop_duplicates(subset=['model_name', 'data_name'], keep='last', inplace=True)
         df_all.to_excel(excel_path, index=False)
-        print(f"[追加] 结果已追加保存至 {excel_path}")
+        print(f"[Append] Results appended to {excel_path}")
     else:
-        raise ValueError("mode 只能是 'overwrite' 或 'append'")
+        raise ValueError("mode must be either 'overwrite' or 'append'")
 
 
 def join_path(*path_components):
@@ -98,50 +100,50 @@ def calculate_image_metrics(pred, target):
         pred = torch.from_numpy(pred).permute(2, 0, 1).unsqueeze(0).float()
         target = torch.from_numpy(target).permute(2, 0, 1).unsqueeze(0).float()
     """
-    计算给定预测和目标图像之间的MSE, RMSE, PSNR和SSIM。
-    :param pred: 预测的图像批次，tensor，shape为[batch_size, channels, height, width]
-    :param target: 真实的图像批次，tensor，shape为[batch_size, channels, height, width]
-    :return: mse, RMSE, PSNR, SSIM的值
+    Compute MSE, RMSE, PSNR, and SSIM between the predicted and target images.
+    :param pred: Predicted image batch, tensor with shape [batch_size, channels, height, width]
+    :param target: Ground-truth image batch, tensor with shape [batch_size, channels, height, width]
+    :return: Values of MSE, RMSE, PSNR, and SSIM
     """
     pred = pred.to(device)
     target = target.to(device)
     # mse Loss
-    # 注意，必须保证所有的函数都放置到了cuda上面
-    # 同时.item()方法会把cuda上面的值移动到CPU上面
+    # Make sure all functions are placed on CUDA when using GPU.
+    # The .item() method moves CUDA values back to the CPU.
     #l1
     mae = l1_fun(pred, target).item()
     #l2
     mse = l2_fun(pred, target).item()
     # RMSE calculation
-    rmse = math.sqrt(mse * 3)  # 乘以3因为是3个通道的平均
+    rmse = math.sqrt(mse * 3)  # Multiply by 3 because the value is averaged over three channels.
     # PSNR calculation
     if mse == 0:
-        psnr = float('inf')  # 避免除以零的错误
+        psnr = float('inf')  # Avoid division-by-zero errors.
     else:
         psnr = 10 * math.log10(1 / mse)
     # ssim calculation
     ssim = ssim_fun(pred, target).item()
-    # deltaE计算
+    # DeltaE calculation
     xl_batch = rgb2lab_diff(pred, device)
     yl_batch = rgb2lab_diff(target, device)
     diff_map = ciede2000_diff(xl_batch, yl_batch, device)
     diff_map = diff_map.mean().item()
-    # Lpips计算
+    # LPIPS calculation
     lpips = loss_fn_lpips(pred, target)
-    lpips = lpips.mean().item()  # 取平均以得到标量损失
+    lpips = lpips.mean().item()  # Take the mean to obtain a scalar loss.
     return mae, rmse, psnr, ssim, diff_map, lpips
 
 
 def create_desire_mask(image, rect):
-    # 获取输入图像的高度和宽度
+    # Get the height and width of the input image.
     height, width = image.shape[:2]
-    # 创建与输入图像大小相同的全零图像
+    # Create an all-zero mask with the same size as the input image.
     mask = np.zeros((height, width), dtype=np.uint8)
-    # 提取矩形的左上角坐标和宽度、高度
+    # Extract the top-left coordinates and the width and height of the rectangle.
     x, y, w, h = rect
-    # 计算矩形的右下角坐标
+    # Compute the bottom-right coordinates of the rectangle.
     x2, y2 = x + w, y + h
-    # 将矩形区域内的像素值设为1
+    # Set pixel values inside the rectangle to 1.
     mask[y:y2, x:x2] = 1
     return mask
 
@@ -149,9 +151,9 @@ def create_desire_mask(image, rect):
 def maximalRectangle(matrix, aspectRatio=1.0):
     if not matrix.size:
         return 0, None
-    # 用于记录找到的最大矩形面积
+    # Record the maximum rectangle area found so far.
     max_area = 0
-    # 用于储存最大矩形的位置与尺寸,是一个tuple
+    # Store the position and size of the maximum rectangle as a tuple.
     best_rect = (0, 0, 0, 0)  # (x, y, width, height)
     rows, cols = matrix.shape
     height = [0] * cols
@@ -177,7 +179,7 @@ def maximalRectangle(matrix, aspectRatio=1.0):
             width = right[j] - left[j]
             ideal_height = width / aspectRatio
             effective_height = min(height[j], int(ideal_height))
-            # 当 aspectRatio 为 1 时，确保宽度和高度相等
+            # When aspectRatio is 1, enforce equal width and height.
             if aspectRatio == 1.0:
                 effective_height = min(width, height[j])
                 width = effective_height
@@ -199,16 +201,16 @@ def calculate_bbox_from_mask(mask_image):
 
 
 def place_image_in_rectangle_opencv(image, mask, rectangle):
-    # 获取矩形的尺寸和位置
+    # Get the rectangle size and position.
     x, y, width, height = rectangle
-    # 根据矩形尺寸调整图像大小
+    # Resize the image to match the rectangle size.
     resized_image = cv.resize(image, (width, height))
-    # 创建一个新的图像，大小与mask相同，初始化为全黑或其他背景
-    # mask 应该是一个二维数组，这里我们创建一个与其同样大小的三通道图像
+    # Create a new image with the same size as the mask, initialized as black or another background.
+    # The mask should be a 2D array; here we create a three-channel image with the same size.
     new_image = np.zeros_like(mask)
-    if len(mask.shape) == 2:  # 如果mask是单通道，转换为三通道
+    if len(mask.shape) == 2:  # Convert single-channel masks to three channels.
         new_image = cv.cvtColor(new_image, cv.COLOR_GRAY2BGR)
-    # 将调整后的图像放置到新图像的指定位置
+    # Place the resized image at the target location in the new image.
     new_image[y:y + height, x:x + width] = resized_image
     # cv.imshow('Processed Image', new_image)
     # cv.waitKey(0)
@@ -218,64 +220,66 @@ def place_image_in_rectangle_opencv(image, mask, rectangle):
 
 def get_mask(data_path, dataset):
     """
-    根据提供的 data_path 和 dataset 构造 mask.png 文件的完整路径，并使用 OpenCV 读取它。
+    Construct the full path to mask.png from the given data_path and dataset,
+    then read it with OpenCV.
 
-    参数：
-        data_path (str): 数据的基本路径。
-        dataset (str): 特定数据集的名称。
+    Args:
+        data_path (str): Root path of the data.
+        dataset (str): Name of the specific dataset.
 
-    返回：
-        im_mask (numpy.ndarray 或 None): 读取的图像。如果文件不存在或读取失败，则返回 None。
+    Returns:
+        im_mask (numpy.ndarray or None): Loaded mask image. Returns None if the
+        file does not exist or cannot be read.
     """
-    # 构造 mask.png 的路径
+    # Build the path to mask.png.
     mask_path = join_path(data_path, dataset, 'cam', 'mask', 'mask.png')
     print("Mask path:", mask_path)
 
-    # 检查路径并读取图像
+    # Check the path and read the image.
     if os.path.exists(mask_path):
-        # 使用 OpenCV 加载图像
+        # Load the image using OpenCV.
         im_mask = cv2.imread(mask_path, cv2.IMREAD_UNCHANGED)
         if im_mask is not None:
-            print("成功读取遮罩文件。")
+            print("Mask file loaded successfully.")
             return im_mask
         else:
-            print("读取遮罩文件时出错。")
+            print("Error occurred while reading the mask file.")
             return None
     else:
-        print("遮罩文件不存在。")
+        print("Mask file does not exist.")
         return None
 
 
 def ensure_directories(*dirs):
     """
-    安全地创建目录，避免可能的栈溢出问题
+    Safely create directories while avoiding potential stack overflow issues.
 
     Args:
-        *dirs: 需要确保存在的目录路径
+        *dirs: Directory paths that must be ensured to exist.
     """
     for directory in dirs:
-        # 验证路径合法性
+        # Validate the directory path.
         if directory and isinstance(directory, str):
             try:
                 path = os.path.abspath(directory)
                 if not os.path.exists(path):
                     os.makedirs(path, exist_ok=True)
-                    print(f"已创建目录: {path}")
+                    print(f"Directory created: {path}")
             except Exception as e:
-                print(f"创建目录 {directory} 时出错: {e}")
+                print(f"Error creating directory {directory}: {e}")
         else:
-            print(f"无效的目录路径: {directory}")
+            print(f"Invalid directory path: {directory}")
 
 def crop_image(image, bbox):
     """
-    根据给定的边界框裁切图像.
+    Crop an image according to the given bounding box.
 
-    :param image: 输入图像 (numpy array)
-    :param bbox: 边界框 (x1, y1, w1, h1)
-    :return: 裁切后的图像 (numpy array)
+    :param image: Input image (numpy array)
+    :param bbox: Bounding box (x1, y1, w1, h1)
+    :return: Cropped image (numpy array)
     """
     x1, y1, w1, h1 = bbox
-    # 计算裁切区域
+    # Compute the crop region.
     crop = image[y1:y1 + h1, x1:x1 + w1]
     return crop
 
@@ -367,25 +371,25 @@ def apply_mask_and_crop_images_actualMetric(data_path, data_list, target_size=(2
         if use_im_mask:
             im_mask = get_mask(data_path, dataset)
         else:
-            # 后续都取消手动绘制的过程，因为这样每一次绘制的mask都会存在微小差异
+            # Manual drawing is disabled to avoid slight mask variations across runs.
             # im_mask = create_mask_from_polygon(ref_max_path, scale_factor=2.0)
             im_mask, _ = compute_mask_from_paths(ref_min_path,ref_max_path)
             save_images(im_mask, mask_path, filename='mask', overwrite=True)
         for phase in ['train', 'test']:
-            # 用于保存对于设置train\test  crop地址
+            # Save the crop path for the current train/test split.
             raw_dir = join_path(data_path, dataset, 'cam', 'raw', phase)
             crop_dir = join_path(data_path, dataset, 'cam', 'crop', phase)
-            # 用于保存crop 表面ref的地址
+            # Save the path for cropped surface reference images.
             crop_ref_dir = join_path(data_path, dataset, 'cam', 'crop', 'ref')
-            # 如果需要采用不同的mask，需要修改这里的mask地址
-            # 用于保存mask的位置
+            # Modify this mask path if a different mask needs to be used.
+            # Save the mask location.
             mask_dir = join_path(data_path, dataset, 'cam', 'mask')
-            # 保存处理后的真实数据地址，也就是mask后的真实数据
+            # Save the processed real-data path, i.e., the masked real data.
             raw_desired_masked_cmp_dir = join_path(data_path, dataset, 'cam', 'desire', 'masked', phase)
             ensure_directories(crop_dir, mask_dir, crop_ref_dir, raw_desired_masked_cmp_dir)
-            # 表面背景的保存图像位置
+            # Save location for background surface images.
             ref_dir = join_path(data_path, dataset, 'cam', 'raw', 'ref')
-            # 用于计算mask的图片125与1号图片
+            # Reference images used to compute the mask.
             # img1_path = join_path(ref_dir, 'img_0125.png')
             img2_path = join_path(ref_dir, 'img_0001.png')
             img2 = cv.imread(img2_path)
@@ -394,19 +398,20 @@ def apply_mask_and_crop_images_actualMetric(data_path, data_list, target_size=(2
             x1, y1, w1, h1 = bbox
             mask_cropped = im_mask.astype(np.uint8)[y1:y1 + h1, x1:x1 + w1]
             im_mask = im_mask.astype(np.uint8)
-            # 返回最大内接矩形，需要注意的是，这里的输入的mask_cropped一定是0，255格式！
+            # Return the largest inscribed rectangle. Note that mask_cropped must be in 0/255 format.
             _, best_rect = maximalRectangle(mask_cropped, aspectRatio=1)
-            # full_best_rect是desired_image的mask，用于后面的真实数据比较
+            # full_best_rect is the desired-image mask used for later real-data comparisons.
             _, full_best_rect = maximalRectangle(im_mask, aspectRatio=1)
-            # desired_mask，输入的img1，也就是根据img1的图片大小，生成一个全0的二维矩阵，然后根据full_best_rect也就最大内接矩形来将其内部变为255白色，以便mask
+            # Create desired_mask based on the size of img1. It starts as an all-zero 2D matrix,
+            # and the region inside full_best_rect (the maximum inscribed rectangle) is set to white for masking.
             desired_mask = create_desire_mask(img2, full_best_rect)
             if not metrics:
                 if best_rect:
                     x, y, width, height = best_rect
-                    # 在原始掩码上绘制红色矩形框
-                    colored_mask = cv.cvtColor(mask_cropped * 255, cv.COLOR_GRAY2BGR)  # 转换为 BGR 彩色图像
-                    cv.rectangle(colored_mask, (x, y), (x + width, y + height), (0, 0, 255), 1)  # 红色框，2 像素宽
-                    # 保存带有红框的图像到文件
+                    # Draw a red rectangle on the original mask.
+                    colored_mask = cv.cvtColor(mask_cropped * 255, cv.COLOR_GRAY2BGR)  # Convert to a BGR color image.
+                    cv.rectangle(colored_mask, (x, y), (x + width, y + height), (0, 0, 255), 1)  # Red box with 2-pixel width.
+                    # Save the image with the red rectangle to file.
                     output_folder = mask_dir
                     filename = 'mask_with_rectangle.png'
                     if not os.path.exists(output_folder):
@@ -419,7 +424,7 @@ def apply_mask_and_crop_images_actualMetric(data_path, data_list, target_size=(2
         ensure_directories(mask_dir, crop_ref_dir, raw_desired_masked_cmp_dir)
         if not metrics:
             for phase in ['train', 'test']:
-                # 用于保存对于设置train\test  crop地址
+                # Save the crop path for the current train/test split.
                 raw_dir = join_path(data_path, dataset, 'cam', 'raw', phase)
                 crop_dir = join_path(data_path, dataset, 'cam', 'crop', phase)
                 ensure_directories(raw_dir, crop_dir)
@@ -434,7 +439,7 @@ def apply_mask_and_crop_images_actualMetric(data_path, data_list, target_size=(2
                             masked_img = cv.bitwise_and(img_cropped, img_cropped, mask=mask_cropped)
                             resized_img = cv.resize(masked_img, target_size)
                             cropped_img_path = join_path(crop_dir, img_name)
-                            # 这里有一个坑，就是保存的时候不能是BGR格式
+                            # Important: the saved image must not use an incorrect BGR format.
                             cv.imwrite(cropped_img_path, resized_img)
                 print(f'{phase} masked and resized image saved to {crop_dir}')
         # ref process
@@ -450,34 +455,35 @@ def apply_mask_and_crop_images_actualMetric(data_path, data_list, target_size=(2
                         masked_img = cv.bitwise_and(img_cropped, img_cropped, mask=mask_cropped)
                         resized_img = cv.resize(masked_img, target_size)
                         cropped_img_path = join_path(crop_ref_dir, img_name)
-                        # 使用opencv读取，然后也使用opencv保存
+                        # Use OpenCV for both reading and saving.
                         cv.imwrite(cropped_img_path, resized_img)
             print(f'Reference image processed and saved to {crop_ref_dir}')
-        # desire地址，这个desire是需要根据最大内接矩形生成的
+        # Desired-image path. The desired image is generated from the maximum inscribed rectangle.
         GT = join_path(data_path, 'test')
-        # crop desire保存地址
+        # Save path for the cropped desired images.
         crop_desire_dir = join_path(data_path, dataset, 'cam', 'crop', 'desire')
         desired_GT_dir = join_path(data_path, dataset, 'cam', 'desire', "test")
         # Create the crop_desire_dir if it doesn't exist
         ensure_directories(crop_desire_dir, desired_GT_dir)
         real_mask_metrics = {
             'mae': 0, 'rmse': 0, 'psnr': 0, 'ssim': 0,
-            'diff_map': 0, 'lpips': 0  # 添加 diff_map 和 lpips
+            'diff_map': 0, 'lpips': 0  # Add diff_map and lpips.
         }
         count = 0
-        # 这里是保存desired_image用于真实指标计算
-        # 获取所有 GT 文件夹下的图片路径
+        # Save desired_image for real-metric evaluation.
+        # Get all image paths under the GT folder.
         from glob import glob
-        image_paths = sorted(glob(os.path.join(GT, 'img_*.png')))  # 或者直接 os.listdir(GT)，但 glob 可筛选格式
+        image_paths = sorted(glob(os.path.join(GT, 'img_*.png')))  # Alternatively, use os.listdir(GT), but glob can filter by format.
         for img_path in image_paths:
             img_name = os.path.basename(img_path)
-            # 读取GT图片
+            # Read the GT image.
             img = cv.imread(img_path)
-            # 生成真实数据mask，然后用于计算指标，存在一个问题就是mask是根据矩形生成的，然后如果光流扭不正就会掩盖这个错误
-            # 这是保存的desired_image，根据GT来保存，先预处理数据
+            # Generate a real-data mask for metric computation. One limitation is that the mask is rectangle-based,
+            # so severe optical-flow misalignment may be partially hidden.
+            # Save the desired image based on GT after preprocessing.
             desired_mask = np.uint8(desired_mask) * 255
             full_desired_GT = place_image_in_rectangle_opencv(img, desired_mask, rectangle=full_best_rect)
-            # 这是保存的desired_image，根据GT来保存
+            # Save the desired image generated from GT.
             full_desired_img_path = join_path(desired_GT_dir, img_name)
             cv.imwrite(full_desired_img_path, full_desired_GT)
 
@@ -488,7 +494,7 @@ def apply_mask_and_crop_images_actualMetric(data_path, data_list, target_size=(2
                     desire_GT = place_image_in_rectangle_opencv(img, mask_cropped, rectangle=best_rect)
                     resized_img = cv.resize(desire_GT, target_size)
                     cropped_img_path = join_path(crop_desire_dir, img_name)
-                    # 这里保存的是用于光流的desired图片
+                    # Save the desired image used for optical flow.
                     cv.imwrite(cropped_img_path, resized_img)
         if metrics:
             print('actual comparison started.\n')
@@ -549,10 +555,11 @@ def apply_mask_and_crop_images_actualMetric(data_path, data_list, target_size=(2
                 if os.path.exists(raw_cmp_dir) and metrics:
                     for img_name in os.listdir(crop_desire_dir):
                         if img_name.endswith('.png') or img_name.endswith('.jpg'):
-                            # 处理真实补偿，为其加上mask，使其与desired_image大小格式相同
+                            # Process the real compensation result and apply the mask so that
+                            # it matches the size and format of desired_image.
                             raw_cmp_path = join_path(raw_cmp_dir, img_name)
                             full_desired_img_path = join_path(desired_GT_dir,img_name)
-                            # 可视化对比图片，确认正确的读取
+                            # Visualize the comparison images to verify they are loaded correctly.
                             # read_and_visualize_image(raw_cmp_path,full_desired_img_path)
                             # Check if the image exists in this compensation folder
                             if not os.path.exists(raw_cmp_path):
@@ -566,7 +573,7 @@ def apply_mask_and_crop_images_actualMetric(data_path, data_list, target_size=(2
                             crop_masked_raw_img_cmp = crop_image(masked_raw_img_cmp,bbox)
                             crop_raw_img_cmp = crop_image(raw_img_cmp,bbox)
                             # visualize_images(crop_masked_raw_img_cmp, crop_full_desired_img)
-                            # 这是保存的 相机拍摄的mask后的补偿图像，用于与desired_image做计算
+                            # Save the mask-applied compensation image captured by the camera for comparison with desired_image.
                             setup_raw_desired_masked_cmp_path = join_path(setup_raw_desired_masked_cmp_dir, img_name)
                             cv.imwrite(setup_raw_desired_masked_cmp_path, masked_raw_img_cmp)
 
