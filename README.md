@@ -190,15 +190,16 @@ If you find this work useful in your research, please consider citing:
   title={Setup-Independent Full Projector Compensation},
   author={Haibo Li and Qingyue Deng and Jijiang Li and Haibin Ling and Bingyao Huang},
   journal={IEEE Transactions on Visualization and Computer Graphics},
-  note={In Press},
-  year={2026}
+  year={2026},
+  doi={10.1109/TVCG.2026.3680736},
+  url={https://doi.org/10.1109/TVCG.2026.3680736}
 }
 ```
 
 **Project Links:**
 - **Project Page:** [https://hai-bo-li.github.io/SIComp](https://hai-bo-li.github.io/SIComp)
 - **GitHub:** [https://github.com/Hai-Bo-Li/SIComp](https://github.com/hai-bo-li/SIComp)
-- **Paper:** Coming soon
+- **Paper:** [https://doi.org/10.1109/TVCG.2026.3680736](https://doi.org/10.1109/TVCG.2026.3680736)
 
 
 [//]: # (If you use this repository in your work, please consider starring ⭐ the project on GitHub.)
